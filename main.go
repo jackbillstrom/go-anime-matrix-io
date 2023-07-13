@@ -3,24 +3,24 @@ package main
 import (
 	"context"
 	"fmt"
-	"os"
-	"os/signal"
-	"syscall"
 	"go-anime-matrix-io/pkg/frame"
 	"go-anime-matrix-io/pkg/gifcreator"
 	"go-anime-matrix-io/pkg/sensors"
 	"go-anime-matrix-io/pkg/utils"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 )
 
 // Constants for necessary parameters
 const (
-	frameWidth  = 64 // Size of Anime-matrix display
-	numFrames   = 30 // Number of frames for the animations
-	fontPath = "./static/Hack-Regular.ttf" // Change this to the actual path of your font
-	fontSize = 10
-	fileName = "out.gif"
-	seconds = 2
+	frameWidth = 64                          // Size of Anime-matrix display
+	numFrames  = 30                          // Number of frames for the animations
+	fontPath   = "./static/Hack-Regular.ttf" // Change this to the actual path of your font
+	fontSize   = 10
+	fileName   = "out.gif"
+	seconds    = 2
 )
 
 // handleCrash is run to disable anime matrix after a recovery
@@ -65,13 +65,12 @@ func main() {
 		for {
 			select {
 			case <-ctx.Done():
-				// If the context is cancelled, return from the goroutine
+				// If the context is canceled, return from the goroutine
 				return
 			case <-ticker.C:
 				// Fetching data to input into image
 				cpuTemp, _, cpuFan, _, err := sensors.GetSensorData()
 				if err != nil {
-					fmt.Errorf("error fetching sensors data, have you installed 'lm-sensors' and has it reachable via the command 'sensors'?", err)
 					continue // Skip this cycle if there was an error fetching the data
 				}
 
@@ -81,16 +80,15 @@ func main() {
 				// Generate frames for single row text
 				frames := make([]*frame.Frame, numFrames)
 				for i := 0; i < numFrames; i++ {
-					f := frame.NewFrame(frameWidth, frame.FrameHeight, fontPath, fontSize)
-					f.DrawText("   " + cpuInfo, 1)
-					f.DrawText(" " + cpuFan, 2)
+					f := frame.NewFrame(frameWidth, frame.Height, fontPath, fontSize)
+					f.DrawText("   "+cpuInfo, 1)
+					f.DrawText(" "+cpuFan, 2)
 					frames[i] = f
 				}
 
-				// Append output to a img
+				// Append output to an img
 				err = gifcreator.SaveGif(fileName, frames)
 				if err != nil {
-					fmt.Errorf("error occured while saving the output gif", err)
 					continue // Skip this cycle if there was an error saving the GIF
 				}
 

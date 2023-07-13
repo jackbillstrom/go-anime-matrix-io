@@ -9,14 +9,14 @@ type AnimationHandler func(texts []string, numFrames int, frameNum int) *frame.F
 
 // ScrollText generates frames for a scrolling text animation
 func ScrollText(text string, numFrames int, frameNum int) *frame.Frame {
-	f := frame.NewFrame(frame.FrameWidth, frame.FrameHeight)
+	f := frame.NewFrame(frame.Width, frame.Height)
 	f.DrawText(text, frameNum-numFrames/2)
 	return f
 }
 
 // BlinkText generates frames for a blinking text animation
 func BlinkText(text string, numFrames int, frameNum int) *frame.Frame {
-	f := frame.NewFrame(frame.FrameWidth, frame.FrameHeight)
+	f := frame.NewFrame(frame.Width, frame.Height)
 	if frameNum%2 == 0 {
 		f.DrawText(text, 0)
 	}
@@ -34,7 +34,7 @@ func GenerateFrames(handler AnimationHandler, texts []string, numFrames int) []*
 
 // SlideText is for sliding text while using multiple rows of text
 func SlideText(texts []string, numFrames int, frameNum int) *frame.Frame {
-	x := frame.NewFrame(frame.FrameWidth, frame.FrameHeight)
+	x := frame.NewFrame(frame.Width, frame.Height)
 	// Create offsets for CPU temp and fan speed text, so they can be shown in the same row
 	offsets := make([]int, len(texts))
 	for i := range offsets {
@@ -55,7 +55,7 @@ func GenerateSingleRowFrames(handler AnimationHandler, text1 string, text2 strin
 
 // StaticText generates frames for a static text
 func StaticText(texts []string, numFrames int, frameNum int) *frame.Frame {
-	x := frame.NewFrame(frame.FrameWidth, frame.FrameHeight)
+	x := frame.NewFrame(frame.Width, frame.Height)
 	offsets := make([]int, len(texts))
 
 	// Keep the text in the same position for all frames
