@@ -1,17 +1,14 @@
 package frame
 
 import (
-	"image"
-	"image/color"
-	_ "image/draw"
-	"os"
-
-	_ "golang.org/x/image/font/basicfont"
-	"golang.org/x/image/math/fixed"
-	"log"
-
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/opentype"
+	"golang.org/x/image/math/fixed"
+	"image"
+	"image/color"
+	"io"
+	"io/fs"
+	"log"
 )
 
 // Constants
@@ -31,12 +28,17 @@ type Frame struct {
 }
 
 // NewFrame initializes a new frame with given dimensions
-func NewFrame(width, height int, fontPath string, fontSize float64) *Frame {
+func NewFrame(width, height, fontSize int, fontFile fs.FS) *Frame {
 	img := image.NewPaletted(image.Rect(0, 0, width, height), []color.Color{color.Black, color.White})
+	face, err := loadFontFace(fontFile, fontSize)
+	if err != nil {
+		log.Fatalf("Failed to load font: %v", err)
+	}
+
 	return &Frame{
 		Img:   img,
 		Delay: Delay,
-		Face:  loadFontFace(fontPath, fontSize),
+		Face:  face,
 	}
 }
 
@@ -82,26 +84,31 @@ func (f *Frame) DrawProgressBar(progress int, row int) {
 	f.DrawText(bar, row)
 }
 
-// loadFontFace loads a font face from a given path
-func loadFontFace(path string, size float64) font.Face {
-	fontBytes, err := os.ReadFile(path)
+func loadFontFace(fontFile fs.FS, size int) (font.Face, error) {
+	f, err := fontFile.Open("static/pixelmix.ttf")
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
+	}
+	defer f.Close()
+
+	// Read the .ttf file
+	bytes, err := io.ReadAll(f)
+	if err != nil {
+		return nil, err
 	}
 
-	f, err := opentype.Parse(fontBytes)
+	font, err := opentype.Parse(bytes)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
-	face, err := opentype.NewFace(f, &opentype.FaceOptions{
-		Size:    size,
-		DPI:     72,
-		Hinting: font.HintingFull,
+	face, err := opentype.NewFace(font, &opentype.FaceOptions{
+		Size: float64(size),
+		DPI:  72,
 	})
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
-	return face
+	return face, nil
 }

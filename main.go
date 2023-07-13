@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"embed"
 	"fmt"
 	"go-anime-matrix-io/pkg/frame"
 	"go-anime-matrix-io/pkg/gifcreator"
@@ -14,14 +15,15 @@ import (
 	"time"
 )
 
+//go:embed static/pixelmix.ttf
+var FontFile embed.FS
+
 // Constants for necessary parameters
 const (
-	frameWidth = 64                      // Size of Anime-matrix display
-	numFrames  = 30                      // Number of frames for the animations
-	fontPath   = "./static/pixelmix.ttf" // Change this to the actual path of your font
-	fontSize   = 7
-	fileName   = "out.gif"
-	seconds    = 2
+	numFrames = 30 // Number of frames for the animations
+	fontSize  = 7
+	fileName  = "out.gif"
+	seconds   = 2
 )
 
 // handleCrash is run to disable anime matrix after a recovery
@@ -33,11 +35,17 @@ func handleCrash() {
 }
 
 func main() {
+
 	// Check for necessary stuff are installed or whatnot
 	err := utils.CheckCommands()
 	if err != nil {
 		fmt.Println("Required command is missing:", err)
 		return
+	}
+
+	// On the first run, set up the service
+	if _, err := os.Stat("/etc/systemd/system/anime-matrix-io.service"); os.IsNotExist(err) {
+		utils.SetupService()
 	}
 
 	// Clear & enable matrix display via asusctl
@@ -90,7 +98,7 @@ func main() {
 				// Generate frames for single row text
 				frames := make([]*frame.Frame, numFrames)
 				for i := 0; i < numFrames; i++ {
-					f := frame.NewFrame(frameWidth, frame.Height, fontPath, fontSize)
+					f := frame.NewFrame(frame.Width, frame.Height, fontSize, FontFile)
 					f.DrawText("      "+cpuTemp, 1)
 					if cpuFan != "0 RPM" {
 						f.DrawText("   "+cpuFan, 3)
@@ -98,7 +106,7 @@ func main() {
 						f.DrawText("  "+netSpeed, 3)
 					} else {
 						// If there is no fan speed or network speed, show the CPU load
-						str := fmt.Sprintf("     CPU %d%%", cpuLoad)
+						str := fmt.Sprintf("   CPU %d%%", cpuLoad)
 						f.DrawText(str, 3)
 					}
 					f.DrawProgressBar(cpuLoad, 4)

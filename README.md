@@ -60,8 +60,13 @@ The program is designed to handle crashes gracefully. If the program crashes or 
 
 ### TODO
 - A TUI to change options graphically
+- Better layout for the matrix display
+- Better error handling
+- Multiple themes
 - Add options to customize the matrix display via a config file.
-- Add an option to run the program as a service.
+- Add support for other Anime Matrix displays
+- Add support for other systems (Windows)
+- Add support for other system sensors (GPU temperature, etc.)
 
 ## Contributing
 
