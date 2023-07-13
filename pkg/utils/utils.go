@@ -29,7 +29,7 @@ func Display(fileName string) {
 	cmd := exec.Command("asusctl", "anime", "pixel-gif", "-p", fileName)
 	err := cmd.Run()
 	if err != nil {
-		log.Fatal("Failed to display graphics: ", err)
+		DisableAnime()
 	}
 }
 
