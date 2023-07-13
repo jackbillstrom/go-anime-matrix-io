@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/shirou/gopsutil/v3/cpu"
+	"github.com/shirou/gopsutil/v3/net"
 	"math"
 	"os/exec"
 	"regexp"
@@ -83,4 +84,54 @@ func GetCPULoad() (load int, err error) {
 	// Round the float up to the nearest whole number
 	rounded := math.Ceil(percent[0])
 	return int(rounded), err
+}
+
+// GetNetworkSpeed returns the current network speed
+func GetNetworkSpeed() (string, error) {
+	// Get initial network stats
+	statsStart, err := net.IOCounters(true)
+	if err != nil {
+		return "", err
+	}
+
+	// Sleep for a second
+	time.Sleep(1 * time.Second)
+
+	// Get network stats again
+	statsEnd, err := net.IOCounters(true)
+	if err != nil {
+		return "", err
+	}
+
+	// Calculate the difference in bytes sent and received
+	bytesRecv := statsEnd[0].BytesRecv - statsStart[0].BytesRecv
+
+	// Format bytes to appropriate units
+	recv := formatBytes(bytesRecv)
+
+	// Return as a string
+	return fmt.Sprintf("%s", recv), nil
+}
+
+// Helpers
+
+// formatBytes formats bytes to a human-readable format
+func formatBytes(bytes uint64) string {
+	const (
+		_         = iota
+		KB uint64 = 1 << (10 * iota)
+		MB
+		GB
+	)
+
+	switch {
+	case bytes >= GB:
+		return fmt.Sprintf("%.2f GB/s", float64(bytes)/float64(GB))
+	case bytes >= MB:
+		return fmt.Sprintf("%.2f MB/s", float64(bytes)/float64(MB))
+	case bytes >= KB:
+		return fmt.Sprintf("%.2f KB/s", float64(bytes)/float64(KB))
+	default:
+		return fmt.Sprintf("%d B/s", bytes)
+	}
 }

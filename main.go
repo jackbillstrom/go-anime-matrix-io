@@ -7,6 +7,7 @@ import (
 	"go-anime-matrix-io/pkg/gifcreator"
 	"go-anime-matrix-io/pkg/sensors"
 	"go-anime-matrix-io/pkg/utils"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -68,17 +69,20 @@ func main() {
 				// If the context is canceled, return from the goroutine
 				return
 			case <-ticker.C:
-				// Fetching data to input into image
+				// 1. Fetching data to input into image
 				cpuTemp, _, cpuFan, _, err := sensors.GetSensorData()
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				// 2. Get CPU Load
+				cpuLoad, err := sensors.GetCPULoad()
 				if err != nil {
 					continue // Skip this cycle if there was an error fetching the data
 				}
 
-				// Prepare information to be displayed on a single row
-				cpuInfo := cpuTemp
-
-				// Get CPU Load
-				cpuLoad, err := sensors.GetCPULoad()
+				// 3. Get network speed
+				netSpeed, err := sensors.GetNetworkSpeed()
 				if err != nil {
 					continue // Skip this cycle if there was an error fetching the data
 				}
@@ -87,8 +91,12 @@ func main() {
 				frames := make([]*frame.Frame, numFrames)
 				for i := 0; i < numFrames; i++ {
 					f := frame.NewFrame(frameWidth, frame.Height, fontPath, fontSize)
-					f.DrawText("      "+cpuInfo, 1)
-					f.DrawText("   "+cpuFan, 3)
+					f.DrawText("      "+cpuTemp, 1)
+					if cpuFan != "0 RPM" {
+						f.DrawText("   "+cpuFan, 3)
+					} else {
+						f.DrawText("     "+netSpeed, 3)
+					}
 					f.DrawProgressBar(cpuLoad, 4)
 					frames[i] = f
 				}
