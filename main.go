@@ -15,10 +15,10 @@ import (
 
 // Constants for necessary parameters
 const (
-	frameWidth = 64                          // Size of Anime-matrix display
-	numFrames  = 30                          // Number of frames for the animations
-	fontPath   = "./static/Hack-Regular.ttf" // Change this to the actual path of your font
-	fontSize   = 10
+	frameWidth = 64                      // Size of Anime-matrix display
+	numFrames  = 30                      // Number of frames for the animations
+	fontPath   = "./static/pixelmix.ttf" // Change this to the actual path of your font
+	fontSize   = 7
 	fileName   = "out.gif"
 	seconds    = 2
 )
@@ -77,12 +77,19 @@ func main() {
 				// Prepare information to be displayed on a single row
 				cpuInfo := cpuTemp
 
+				// Get CPU Load
+				cpuLoad, err := sensors.GetCPULoad()
+				if err != nil {
+					continue // Skip this cycle if there was an error fetching the data
+				}
+
 				// Generate frames for single row text
 				frames := make([]*frame.Frame, numFrames)
 				for i := 0; i < numFrames; i++ {
 					f := frame.NewFrame(frameWidth, frame.Height, fontPath, fontSize)
-					f.DrawText("   "+cpuInfo, 1)
-					f.DrawText(" "+cpuFan, 2)
+					f.DrawText("      "+cpuInfo, 1)
+					f.DrawText("   "+cpuFan, 3)
+					f.DrawProgressBar(cpuLoad, 4)
 					frames[i] = f
 				}
 

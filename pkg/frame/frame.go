@@ -19,7 +19,7 @@ const (
 	Width    = 64
 	Height   = 32
 	Delay    = 5 // Lower this to make the animation faster
-	FontSize = 11
+	FontSize = 7
 )
 
 // Frame represents a single frame in an animation
@@ -31,13 +31,12 @@ type Frame struct {
 }
 
 // NewFrame initializes a new frame with given dimensions
-
 func NewFrame(width, height int, fontPath string, fontSize float64) *Frame {
 	img := image.NewPaletted(image.Rect(0, 0, width, height), []color.Color{color.Black, color.White})
 	return &Frame{
 		Img:   img,
 		Delay: Delay,
-		Face:  LoadFontFace(fontPath, fontSize),
+		Face:  loadFontFace(fontPath, fontSize),
 	}
 }
 
@@ -69,7 +68,22 @@ func (f *Frame) DrawTextMulti(texts []string, offsets []int) {
 	}
 }
 
-func LoadFontFace(path string, size float64) font.Face {
+// DrawProgressBar draws a progress bar with the given progress
+func (f *Frame) DrawProgressBar(progress int, row int) {
+	bar := ""
+	maxProgress := 12
+	for i := 0; i < maxProgress; i++ {
+		if i < progress {
+			bar += "-"
+		} else {
+			bar += " "
+		}
+	}
+	f.DrawText(bar, row)
+}
+
+// loadFontFace loads a font face from a given path
+func loadFontFace(path string, size float64) font.Face {
 	fontBytes, err := os.ReadFile(path)
 	if err != nil {
 		log.Fatal(err)

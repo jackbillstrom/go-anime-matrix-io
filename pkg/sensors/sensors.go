@@ -4,10 +4,12 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"github.com/shirou/gopsutil/v3/cpu"
 	"math"
 	"os/exec"
 	"regexp"
 	"strconv"
+	"time"
 )
 
 // GetSensorData returns and sturctures the output from the lm-sensors package
@@ -40,7 +42,7 @@ func GetSensorData() (cpuTemp string, gpuTemp string, cpuFan string, gpuFan stri
 			// Convert the float to an integer
 			cpuTemp = fmt.Sprintf("%v°C", int(rounded))
 		}
-		
+
 		if gpuTempRegexp.MatchString(line) {
 			gpuTemp = gpuTempRegexp.FindStringSubmatch(line)[1]
 			var flt float64
@@ -55,12 +57,12 @@ func GetSensorData() (cpuTemp string, gpuTemp string, cpuFan string, gpuFan stri
 			// Convert the float to an integer
 			gpuTemp = fmt.Sprintf("%v°C", int(rounded))
 		}
-		
+
 		if cpuFanRegexp.MatchString(line) {
 			cpuFan = cpuFanRegexp.FindStringSubmatch(line)[1]
 			cpuFan = fmt.Sprintf("%s RPM", cpuFan)
 		}
-		
+
 		if gpuFanRegexp.MatchString(line) {
 			gpuFan = gpuFanRegexp.FindStringSubmatch(line)[1]
 			gpuFan = fmt.Sprintf("%s RPM", gpuFan)
@@ -74,11 +76,11 @@ func GetSensorData() (cpuTemp string, gpuTemp string, cpuFan string, gpuFan stri
 	return cpuTemp, gpuTemp, cpuFan, gpuFan, nil
 }
 
+// GetCPULoad returns the current CPU load
+func GetCPULoad() (load int, err error) {
+	percent, err := cpu.Percent(time.Second, false)
 
-func convertStringToFloat(str string) (float64, error) {
-	flt, err := strconv.ParseFloat(str, 64)
-	if err != nil {
-		// do something with err
-	}
-	return flt, err // <-- err is in scope here, no error
+	// Round the float up to the nearest whole number
+	rounded := math.Ceil(percent[0])
+	return int(rounded), err
 }
