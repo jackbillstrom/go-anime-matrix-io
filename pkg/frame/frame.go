@@ -89,7 +89,12 @@ func loadFontFace(fontFile fs.FS, size int) (font.Face, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
+	defer func(f fs.File) {
+		err := f.Close()
+		if err != nil {
+			log.Fatalf("Failed to close font file: %v", err)
+		}
+	}(f)
 
 	// Read the .ttf file
 	bytes, err := io.ReadAll(f)
@@ -97,12 +102,12 @@ func loadFontFace(fontFile fs.FS, size int) (font.Face, error) {
 		return nil, err
 	}
 
-	font, err := opentype.Parse(bytes)
+	fontFace, err := opentype.Parse(bytes)
 	if err != nil {
 		return nil, err
 	}
 
-	face, err := opentype.NewFace(font, &opentype.FaceOptions{
+	face, err := opentype.NewFace(fontFace, &opentype.FaceOptions{
 		Size: float64(size),
 		DPI:  72,
 	})
