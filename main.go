@@ -17,7 +17,7 @@ import (
 const (
 	frameWidth  = 64 // Size of Anime-matrix display
 	numFrames   = 30 // Number of frames for the animations
-	fontPath = "/home/jack/code/go-anime-matrix-io/static/Hack-Regular.ttf" // Change this to the actual path of your font
+	fontPath = "./static/Hack-Regular.ttf" // Change this to the actual path of your font
 	fontSize = 10
 	fileName = "out.gif"
 	seconds = 2
