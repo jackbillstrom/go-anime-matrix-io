@@ -2,6 +2,9 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
 	"go-anime-matrix-io/pkg/frame"
 	"go-anime-matrix-io/pkg/gifcreator"
 	"go-anime-matrix-io/pkg/sensors"
@@ -16,6 +19,7 @@ const (
 	fontPath = "/home/jack/code/go-anime-matrix-io/static/Hack-Regular.ttf" // Change this to the actual path of your font
 	fontSize = 10
 	fileName = "out.gif"
+	seconds = 10
 )
 
 // handleCrash is run to disable anime matrix after a recovery
@@ -27,8 +31,15 @@ func handleCrash() {
 }
 
 func main() {
-	// Create a ticker that triggers every 10 seconds
-	ticker := time.NewTicker(10 * time.Second)
+	// Check for necessary stuff are installed or whatnot
+	err := utils.CheckCommands()
+	if err != nil {
+		fmt.Println("Required command is missing:", err)
+		return
+	}
+
+	// Create a ticker that triggers every X seconds
+	ticker := time.NewTicker(seconds * time.Second)
 
 	// Clear & enable matrix display via asusctl
 	utils.EnableAnime()
@@ -38,6 +49,25 @@ func main() {
 
 	// Make sure anime is disabled when the program crashes
 	defer handleCrash()
+
+	// setup signal catching
+	sigs := make(chan os.Signal, 1)
+
+	// catch all signals since not explicitly listing
+	signal.Notify(sigs)
+
+	// method invoked upon seeing signal
+	go func() {
+		s := <-sigs
+		switch s {
+		case syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT:
+			fmt.Println("Received an interrupt, stopping services...")
+			utils.DisableAnime()
+			os.Exit(0)
+		default:
+			fmt.Println("Received a signal:", s)
+		}
+	}()
 
 	// Launch a goroutine that will update the data and generate the GIF
 	go func() {
@@ -77,6 +107,4 @@ func main() {
 
 	// Wait indefinitely. Press Ctrl+C to exit the program.
 	select {}
-
-	// if sigkill, clear display
 }

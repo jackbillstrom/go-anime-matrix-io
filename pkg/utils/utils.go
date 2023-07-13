@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"log"
 	"os/exec"
 )
@@ -30,4 +31,21 @@ func Display(fileName string) {
 	if err != nil {
 		log.Fatal("Failed to display graphics: ", err)
 	}
+}
+
+// CheckCommands is used for checking for necessesary tools are installed
+func CheckCommands() error {
+	commands := []string{
+		"asusctl",
+		"sensors",
+		}
+
+		for _, command := range commands {
+			_, err := exec.LookPath(command)
+			if err != nil {
+				return fmt.Errorf("command not found: %s", command)
+			}
+		}
+
+		return nil
 }
