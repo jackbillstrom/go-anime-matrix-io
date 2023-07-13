@@ -1,4 +1,5 @@
 # go-anime-matrix-io
+![A generated gif-image that displays on your Anime Matrix display](./out.gif)
 
 This project, `go-anime-matrix-io`, is a Go-based utility that fetches system performance data (CPU temperature and fan speeds) and displays it on an ASUS Anime Matrix display. It works by retrieving system sensor data at regular intervals, and generates a GIF that is displayed on the Anime Matrix display. This utility has been tested to work on systems running ASUS hardware with an Anime Matrix display and the `asusctl` utility installed.
 
@@ -59,8 +60,6 @@ The program is designed to handle crashes gracefully. If the program crashes or 
 
 ### TODO
 - A TUI to change options graphically
-- Implement a gauge meter for RAM usage.
-- Show network usage.
 - Add options to customize the matrix display via a config file.
 - Add an option to run the program as a service.
 

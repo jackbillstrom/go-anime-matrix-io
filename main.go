@@ -94,8 +94,12 @@ func main() {
 					f.DrawText("      "+cpuTemp, 1)
 					if cpuFan != "0 RPM" {
 						f.DrawText("   "+cpuFan, 3)
+					} else if netSpeed != "0 B/s" {
+						f.DrawText("  "+netSpeed, 3)
 					} else {
-						f.DrawText("     "+netSpeed, 3)
+						// If there is no fan speed or network speed, show the CPU load
+						str := fmt.Sprintf("     CPU %d%%", cpuLoad)
+						f.DrawText(str, 3)
 					}
 					f.DrawProgressBar(cpuLoad, 4)
 					frames[i] = f
