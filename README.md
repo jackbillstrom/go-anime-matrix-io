@@ -19,18 +19,18 @@ In order to run this project, you must have the following installed:
 You can install `asusctl` and `lm-sensors` using the package manager for your system. For Ubuntu-based systems, you would use:
 
 ```sh
-sudo apt install asusctl lm-sensors
+sudo apt install lm-sensors
 ```
+
+`asusctl` was installed on my Ubuntu machine while following their build instructions. You can find the instructions for installing `asusctl` on their [GitLab page](https://gitlab.com/asus-linux/asusctl#building)
 
 ### Installing
 
 To get a copy of this project, you can clone it from GitHub using the following command:
 
 ```sh
-git clone https://github.com/username/go-anime-matrix-io.git
+git clone https://github.com/jackbillstrom/go-anime-matrix-io.git
 ```
-
-(Replace `username` with your GitHub username.)
 
 After cloning the project, navigate into the project directory:
 
@@ -50,6 +50,15 @@ Once you have built the project, you can run it using:
 
 ```sh
 ./go-anime-matrix-io
+```
+
+**To install as a service, you might need to run the program as root.**
+
+In some cases, you'd need to run the commands below in order to run as it as a service:
+
+
+```sh
+sudo systemctl daemon-reload && sudo systemctl restart anime-matrix-io.service
 ```
 
 When the program is running, it will update the Anime Matrix display with the system's CPU temperature and fan speed every 10 seconds. The program runs indefinitely until it is stopped. To stop the program, you can use `Ctrl+C` in the terminal.
