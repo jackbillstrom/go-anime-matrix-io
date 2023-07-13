@@ -53,6 +53,17 @@ Once you have built the project, you can run it using:
 
 When the program is running, it will update the Anime Matrix display with the system's CPU temperature and fan speed every 10 seconds. The program runs indefinitely until it is stopped. To stop the program, you can use `Ctrl+C` in the terminal.
 
+### What to do if the program crashes
+
+The program is designed to handle crashes gracefully. If the program crashes or is forcefully terminated, it will automatically disable the anime matrix.
+
+### TODO
+- A TUI to change options graphically
+- Implement a gauge meter for RAM usage.
+- Show network usage.
+- Add options to customize the matrix display via a config file.
+- Add an option to run the program as a service.
+
 ## Contributing
 
 We welcome contributions from the community. If you would like to contribute, please fork the repository and submit a pull request.
