@@ -85,7 +85,7 @@ func (f *Frame) DrawProgressBar(progress int, row int) {
 }
 
 func loadFontFace(fontFile fs.FS, size int) (font.Face, error) {
-	f, err := fontFile.Open("static/fonts/pixelmix.ttf")
+	f, err := fontFile.Open("fonts/pixelmix.ttf")
 	if err != nil {
 		return nil, err
 	}

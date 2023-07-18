@@ -16,17 +16,15 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-//go:embed static/fonts/pixelmix.ttf
-var FontFile embed.FS
-
 //go:embed Icon.png
 var IconFile embed.FS
 
 // Main window
-var topWindow fyne.Window
+var _ fyne.Window
 
 const preferenceCurrentTutorial = "currentTutorial"
 
+// makeTray renders the system tray menu
 func makeTray(a fyne.App, w fyne.Window) {
 	if desk, ok := a.(desktop.App); ok {
 		h := fyne.NewMenuItem("Open settings", func() {
@@ -40,13 +38,17 @@ func makeTray(a fyne.App, w fyne.Window) {
 }
 
 func main() {
-	a := app.NewWithID("github.jackbillstrom.go-anime-matrix-io")
+	utils.DisableAnime()
+
+	defer utils.HandleCrash()
+
+	a := app.NewWithID("com.jackbillstrom.go-anime-matrix-io")
 	a.SetIcon(utils.AppIcon(IconFile))
 
 	//logLifecycle(a)
 	w := a.NewWindow("Go Anime Matrix")
-	topWindow = w
 
+	_ = w
 	makeTray(a, w)
 
 	//w.SetMainMenu(makeMenu(a, w))
@@ -58,21 +60,10 @@ func main() {
 	})
 
 	content := container.NewMax()
-	title := widget.NewLabel("Component name")
-	intro := widget.NewLabel("An introduction would probably go\nhere, as well as a")
+	title := widget.NewLabel("")
+	intro := widget.NewLabel("")
 	intro.Wrapping = fyne.TextWrapWord
 	setTutorial := func(t gui.Screen) {
-		if fyne.CurrentDevice().IsMobile() {
-			child := a.NewWindow(t.Title)
-			topWindow = child
-			child.SetContent(t.View(topWindow))
-			child.Show()
-			child.SetOnClosed(func() {
-				topWindow = w
-			})
-			return
-		}
-
 		title.SetText(t.Title)
 		intro.SetText(t.Intro)
 
@@ -93,6 +84,7 @@ func main() {
 	w.ShowAndRun()
 }
 
+// makeNav creates the navigation tree for the application list menu
 func makeNav(setTutorial func(tutorial gui.Screen), loadPrevious bool) fyne.CanvasObject {
 	a := fyne.CurrentApp()
 
@@ -106,26 +98,19 @@ func makeNav(setTutorial func(tutorial gui.Screen), loadPrevious bool) fyne.Canv
 			return ok && len(children) > 0
 		},
 		CreateNode: func(branch bool) fyne.CanvasObject {
-			return widget.NewLabel("Collection Widgets")
+			return widget.NewLabel("")
 		},
 		UpdateNode: func(uid string, branch bool, obj fyne.CanvasObject) {
 			t, ok := gui.Screens[uid]
 			if !ok {
-				fyne.LogError("Missing tutorial panel: "+uid, nil)
+				fyne.LogError("Missing panel: "+uid, nil)
 				return
 			}
 			obj.(*widget.Label).SetText(t.Title)
-			if unsupportedTutorial(t) {
-				obj.(*widget.Label).TextStyle = fyne.TextStyle{Italic: true}
-			} else {
-				obj.(*widget.Label).TextStyle = fyne.TextStyle{}
-			}
+			obj.(*widget.Label).TextStyle = fyne.TextStyle{}
 		},
 		OnSelected: func(uid string) {
 			if t, ok := gui.Screens[uid]; ok {
-				if unsupportedTutorial(t) {
-					return
-				}
 				a.Preferences().SetString(preferenceCurrentTutorial, uid)
 				setTutorial(t)
 			}
@@ -138,8 +123,4 @@ func makeNav(setTutorial func(tutorial gui.Screen), loadPrevious bool) fyne.Canv
 	}
 
 	return container.NewBorder(nil, nil, nil, nil, tree)
-}
-
-func unsupportedTutorial(t gui.Screen) bool {
-	return !t.SupportWeb && fyne.CurrentDevice().IsBrowser()
 }

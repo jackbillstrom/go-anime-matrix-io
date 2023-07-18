@@ -2,6 +2,8 @@ package gui
 
 import (
 	"fmt"
+	"fyne.io/fyne/v2/theme"
+	"go-anime-matrix-io/pkg/utils"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -9,51 +11,78 @@ import (
 )
 
 type AppSettings struct {
-	Mode            string
-	ShowCPUTemp     bool
-	CPUFanSpeed     string
-	CPULoadOrRAMUse string
-	ShowSongTitle   bool
-	ShowEqualizer   bool
-	Brightness      float64
+	Enabled         bool    `json:"enabled"`
+	Mode            string  `json:"mode"`
+	ShowCPUTemp     bool    `json:"show_cpu_temp"`
+	CPUFanSpeed     string  `json:"cpu_fan_speed"`
+	CPULoadOrRAMUse string  `json:"cpu_load_or_ram_use"`
+	ShowSongTitle   bool    `json:"show_song_title"`
+	ShowEqualizer   bool    `json:"show_equalizer"`
+	Brightness      float64 `json:"brightness"`
 }
 
 // makeSettingsTab creates a view for accessing options
 func makeSettingsTab(_ fyne.Window) fyne.CanvasObject {
+	var preferences = fyne.CurrentApp().Preferences()
 	appSettings := &AppSettings{}
+
+	playAction := widget.NewToolbarAction(theme.MediaPlayIcon(), func() {})
+
+	// Toolbar
+	toolBar := widget.NewToolbar(widget.NewToolbarAction(theme.DocumentSaveIcon(), func() {
+		preferences.SetString("anim_mode", appSettings.Mode)
+		preferences.SetBool("show_cpu_temp", appSettings.ShowCPUTemp)
+		preferences.SetString("show_fan_speed", appSettings.CPUFanSpeed)
+		fmt.Printf("%+v\n", appSettings)
+	}),
+		widget.NewToolbarSeparator(),
+		widget.NewToolbarSpacer(),
+		playAction,
+		widget.NewToolbarAction(theme.MediaReplayIcon(), func() { fmt.Println("Restarting ...") }),
+	)
+
+	playAction.OnActivated = func() {
+		if appSettings.Enabled {
+			go utils.DisableAnime()
+			appSettings.Enabled = false
+			playAction.Icon = theme.MediaPlayIcon()
+		} else {
+			// Enable
+			go utils.Startup()
+			appSettings.Enabled = true
+			playAction.Icon = theme.MediaPauseIcon()
+		}
+		toolBar.Refresh()
+	}
+
 	// Mode select
 	modeSelect := widget.NewSelect([]string{"System mode", "Audio mode"}, func(s string) {
 		appSettings.Mode = s
-		fmt.Println("selected mode", s)
 	})
 
 	// CPU settings
 	cpuTempCheck := widget.NewCheck("Show CPU temperature", func(on bool) {
 		appSettings.ShowCPUTemp = on
-		fmt.Println("checked CPU Temp", on)
 	})
 
-	// CPU fan speed
+	// Fan Speeds
 	cpuFanSpeedSelect := widget.NewSelect([]string{"CPU Fan Speed", "GPU Fan Speed", "Average Fan Speeds", "Battery"}, func(s string) {
 		appSettings.CPUFanSpeed = s
-		fmt.Println("selected CPU fan speed", s)
 	})
 
 	// CPU Load or RAM usage
 	cpuLoadOrRAMUse := widget.NewRadioGroup([]string{"CPU Load", "RAM usage"}, func(s string) {
 		appSettings.CPULoadOrRAMUse = s
-		fmt.Println("selected CPU load or RAM usage", s)
 	})
 
 	// Audio settings
 	showSongTitleCheck := widget.NewCheck("Show song title", func(on bool) {
 		appSettings.ShowSongTitle = on
-		fmt.Println("checked Show Song Title", on)
 	})
 
+	// Equalizer
 	showEqualizerCheck := widget.NewCheck("Show equalizer", func(on bool) {
 		appSettings.ShowEqualizer = on
-		fmt.Println("checked Show Equalizer", on)
 	})
 
 	// Brightness slider
@@ -62,13 +91,14 @@ func makeSettingsTab(_ fyne.Window) fyne.CanvasObject {
 	brightnessSlider.Step = 10
 	brightnessSlider.OnChanged = func(value float64) {
 		appSettings.Brightness = value
-		fmt.Println("Brightness changed", value)
 	}
+
 	// Labels
 	themeLabel := widget.NewLabelWithStyle("Select a theme preset", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	fanLabel := widget.NewLabelWithStyle("Select a fan", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	fanLabel := widget.NewLabelWithStyle("Select sensor", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 
-	mainContainer := container.NewVBox(
+	// Create the main container
+	settingsLayout := container.NewVBox(
 		themeLabel,
 		modeSelect,
 		fanLabel,
@@ -80,23 +110,26 @@ func makeSettingsTab(_ fyne.Window) fyne.CanvasObject {
 		brightnessSlider,
 	)
 
+	// Update visible widgets based on selected mode
 	modeSelect.OnChanged = func(s string) {
 		// Clear the container and add modeSelect
-		mainContainer.Objects = []fyne.CanvasObject{modeSelect}
+		settingsLayout.Objects = []fyne.CanvasObject{modeSelect}
 
 		// Now add the widgets that are relevant for the selected mode
 		if s == "System mode" {
-			mainContainer.Add(cpuTempCheck)
-			mainContainer.Add(fanLabel)
-			mainContainer.Add(cpuFanSpeedSelect)
-			mainContainer.Add(cpuLoadOrRAMUse)
+			settingsLayout.Add(cpuTempCheck)
+			settingsLayout.Add(fanLabel)
+			settingsLayout.Add(cpuFanSpeedSelect)
+			settingsLayout.Add(cpuLoadOrRAMUse)
 		} else if s == "Audio mode" {
-			mainContainer.Add(showSongTitleCheck)
-			mainContainer.Add(showEqualizerCheck)
+			settingsLayout.Add(showSongTitleCheck)
+			settingsLayout.Add(showEqualizerCheck)
 		}
-		mainContainer.Add(brightnessSlider) // Always show brightness slider
-		mainContainer.Refresh()             // Refresh the container to show updated widgets
+		settingsLayout.Add(brightnessSlider) // Always show brightness slider
+		settingsLayout.Refresh()             // Refresh the container to show updated widgets
 	}
 
-	return mainContainer
+	// A layout that contains the toolbar and the settings layout
+	fullLayout := container.NewBorder(toolBar, nil, nil, settingsLayout)
+	return fullLayout
 }
