@@ -1,123 +1,48 @@
 package main
 
 import (
-	"context"
-	"embed"
-	"fmt"
-	"go-anime-matrix-io/pkg/frame"
-	"go-anime-matrix-io/pkg/gifcreator"
-	"go-anime-matrix-io/pkg/sensors"
-	"go-anime-matrix-io/pkg/utils"
 	"log"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
 
-	"github.com/getlantern/systray"
+	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/container"
+
+	"embed"
+
+	"fyne.io/fyne/v2/widget"
 )
 
 //go:embed static/fonts/pixelmix.ttf
 var FontFile embed.FS
 
-// Constants for necessary parameters
-const (
-	numFrames = 30 // Number of frames for the animations
-	fontSize  = 7
-	fileName  = "out.gif"
-	seconds   = 2
-)
-
 func main() {
-	// Initialize the systray
-	systray.Run(onReady, utils.DisableAnime)
-}
+	myApp := app.New()
+	myWindow := myApp.NewWindow("Anime Matrix IO")
 
-func onReady() {
-	// Create a cancellable context
-	ctx, cancel := context.WithCancel(context.Background())
+	entry := widget.NewEntry()
+	textArea := widget.NewMultiLineEntry()
 
-	// Set up signal catching
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-
-	// Create a channel to receive quit events from systray
-	quitCh := make(chan struct{})
-
-	// Launch a goroutine that will update the data and generate the GIF
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				// If the context is canceled, return from the goroutine
-				return
-			case <-time.Tick(seconds * time.Second):
-				// Fetching data to input into image
-				cpuTemp, _, cpuFan, _, err := sensors.GetSensorData()
-				if err != nil {
-					log.Fatal(err)
-				}
-
-				// Get CPU Load
-				cpuLoad, err := sensors.GetCPULoad()
-				if err != nil {
-					continue // Skip this cycle if there was an error fetching the data
-				}
-
-				// Get network speed
-				netSpeed, err := sensors.GetNetworkSpeed()
-				if err != nil {
-					continue // Skip this cycle if there was an error fetching the data
-				}
-
-				// Generate frames for single row text
-				frames := make([]*frame.Frame, numFrames)
-				for i := 0; i < numFrames; i++ {
-					f := frame.NewFrame(frame.Width, frame.Height, fontSize, FontFile)
-					f.DrawText("      "+cpuTemp, 1)
-					if cpuFan != "0 RPM" {
-						f.DrawText("   "+cpuFan, 3)
-					} else if netSpeed != "0 B/s" {
-						f.DrawText("  "+netSpeed, 3)
-					} else {
-						// If there is no fan speed or network speed, show the CPU load
-						str := fmt.Sprintf("   CPU %d%%", cpuLoad)
-						f.DrawText(str, 3)
-					}
-					f.DrawProgressBar(cpuLoad, 4)
-					frames[i] = f
-				}
-
-				// Append output to an image
-				err = gifcreator.SaveGif(fileName, frames)
-				if err != nil {
-					continue // Skip this cycle if there was an error saving the GIF
-				}
-
-				// Append to anime matrix
-				utils.Display(fileName)
-			}
-		}
-	}()
-
-	// Handle quit event from systray
-	go func() {
-		<-quitCh
-		cancel()
-	}()
-
-	// Set up the systray menu
-	mQuit := systray.AddMenuItem("Quit", "Quit the application")
-
-	// Main loop
-	for {
-		select {
-		case <-mQuit.ClickedCh:
-			// Quit event received, send a signal to the goroutine to cancel the context
-			quitCh <- struct{}{}
-			utils.DisableAnime()
-			systray.Quit()
-			return
-		}
+	settingsForm := &widget.Form{
+		Items: []*widget.FormItem{ // we can specify items in the constructor
+			{Text: "Entry", Widget: entry}},
+		OnSubmit: func() { // optional, handle form submission
+			log.Println("Form submitted:", entry.Text)
+			log.Println("multiline:", textArea.Text)
+			myWindow.Close()
+		},
 	}
+
+	// we can also append items
+	settingsForm.Append("Text", textArea)
+
+	// Set up tabs
+	tabs := container.NewAppTabs(
+		container.NewTabItem("Preview", widget.NewLabel("Skall visa GIF-bilden animerad i realtid?")),
+		container.NewTabItem("Settings", settingsForm),
+		container.NewTabItem("About", widget.NewLabel("TODO")),
+	)
+
+	tabs.SetTabLocation(container.TabLocationLeading)
+
+	myWindow.SetContent(tabs)
+	myWindow.ShowAndRun()
 }
