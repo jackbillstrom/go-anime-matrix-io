@@ -5,6 +5,7 @@ go 1.20
 require (
 	fyne.io/fyne v1.4.3
 	fyne.io/fyne/v2 v2.3.5
+	github.com/elastic/gosigar v0.14.2
 	github.com/getlantern/systray v1.2.2
 	github.com/shirou/gopsutil/v3 v3.23.6
 	golang.org/x/image v0.9.0
@@ -35,6 +36,7 @@ require (
 	github.com/jsummers/gobmp v0.0.0-20151104160322-e2ba15ffa76e // indirect
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
 	github.com/oxtoacart/bpool v0.0.0-20190530202638-03653db5a59c // indirect
+	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
 	github.com/shoenig/go-m1cpu v0.1.6 // indirect

@@ -3,6 +3,7 @@ package gui
 import (
 	"fmt"
 	"fyne.io/fyne/v2/theme"
+	"go-anime-matrix-io/internal/models"
 	"go-anime-matrix-io/pkg/utils"
 
 	"fyne.io/fyne/v2"
@@ -10,21 +11,10 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-type AppSettings struct {
-	Enabled         bool    `json:"enabled"`
-	Mode            string  `json:"mode"`
-	ShowCPUTemp     bool    `json:"show_cpu_temp"`
-	CPUFanSpeed     string  `json:"cpu_fan_speed"`
-	CPULoadOrRAMUse string  `json:"cpu_load_or_ram_use"`
-	ShowSongTitle   bool    `json:"show_song_title"`
-	ShowEqualizer   bool    `json:"show_equalizer"`
-	Brightness      float64 `json:"brightness"`
-}
-
 // makeSettingsTab creates a view for accessing options
 func makeSettingsTab(_ fyne.Window) fyne.CanvasObject {
 	var preferences = fyne.CurrentApp().Preferences()
-	appSettings := &AppSettings{}
+	appSettings := &models.AppSettings{}
 
 	playAction := widget.NewToolbarAction(theme.MediaPlayIcon(), func() {})
 
@@ -33,7 +23,6 @@ func makeSettingsTab(_ fyne.Window) fyne.CanvasObject {
 		preferences.SetString("anim_mode", appSettings.Mode)
 		preferences.SetBool("show_cpu_temp", appSettings.ShowCPUTemp)
 		preferences.SetString("show_fan_speed", appSettings.CPUFanSpeed)
-		fmt.Printf("%+v\n", appSettings)
 	}),
 		widget.NewToolbarSeparator(),
 		widget.NewToolbarSpacer(),
@@ -48,7 +37,7 @@ func makeSettingsTab(_ fyne.Window) fyne.CanvasObject {
 			playAction.Icon = theme.MediaPlayIcon()
 		} else {
 			// Enable
-			go utils.Startup()
+			go utils.Startup(appSettings)
 			appSettings.Enabled = true
 			playAction.Icon = theme.MediaPauseIcon()
 		}
@@ -79,10 +68,8 @@ func makeSettingsTab(_ fyne.Window) fyne.CanvasObject {
 	showSongTitleCheck := widget.NewCheck("Show song title", func(on bool) {
 		appSettings.ShowSongTitle = on
 	})
-
-	// Equalizer
-	showEqualizerCheck := widget.NewCheck("Show equalizer", func(on bool) {
-		appSettings.ShowEqualizer = on
+	showEqualizerDemoCheck := widget.NewCheck("Show equalizer demo", func(on bool) {
+		appSettings.EqualizerDemo = on
 	})
 
 	// Brightness slider
@@ -95,41 +82,36 @@ func makeSettingsTab(_ fyne.Window) fyne.CanvasObject {
 
 	// Labels
 	themeLabel := widget.NewLabelWithStyle("Select a theme preset", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	fanLabel := widget.NewLabelWithStyle("Select sensor", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	sensorLabel := widget.NewLabelWithStyle("Select sensor", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 
 	// Create the main container
 	settingsLayout := container.NewVBox(
 		themeLabel,
 		modeSelect,
-		fanLabel,
-		cpuTempCheck,
-		cpuFanSpeedSelect,
-		cpuLoadOrRAMUse,
-		showSongTitleCheck,
-		showEqualizerCheck,
 		brightnessSlider,
 	)
 
 	// Update visible widgets based on selected mode
 	modeSelect.OnChanged = func(s string) {
+		appSettings.Mode = s
 		// Clear the container and add modeSelect
 		settingsLayout.Objects = []fyne.CanvasObject{modeSelect}
 
 		// Now add the widgets that are relevant for the selected mode
 		if s == "System mode" {
 			settingsLayout.Add(cpuTempCheck)
-			settingsLayout.Add(fanLabel)
+			settingsLayout.Add(sensorLabel)
 			settingsLayout.Add(cpuFanSpeedSelect)
 			settingsLayout.Add(cpuLoadOrRAMUse)
 		} else if s == "Audio mode" {
+			settingsLayout.Add(showEqualizerDemoCheck)
 			settingsLayout.Add(showSongTitleCheck)
-			settingsLayout.Add(showEqualizerCheck)
 		}
 		settingsLayout.Add(brightnessSlider) // Always show brightness slider
 		settingsLayout.Refresh()             // Refresh the container to show updated widgets
 	}
 
 	// A layout that contains the toolbar and the settings layout
-	fullLayout := container.NewBorder(toolBar, nil, nil, settingsLayout)
+	fullLayout := container.NewBorder(toolBar, settingsLayout, nil, nil)
 	return fullLayout
 }

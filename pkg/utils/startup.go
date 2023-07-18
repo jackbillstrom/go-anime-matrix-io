@@ -2,6 +2,7 @@ package utils
 
 import (
 	"context"
+	"go-anime-matrix-io/internal/models"
 	"go-anime-matrix-io/pkg/frame"
 	"go-anime-matrix-io/pkg/gifcreator"
 	"go-anime-matrix-io/pkg/sensors"
@@ -16,14 +17,15 @@ import (
 const (
 	fileName  = "out.gif" // Name of the output file
 	fontSize  = 7
-	numFrames = 30 // Number of frames for the animations
-	seconds   = 1  // Refresh rate
+	numFrames = 1 // Number of frames for the animations
+	seconds   = 1 // Refresh rate
 )
 
-func Startup() context.CancelFunc {
-	// Check for necessary stuff are installed or whatnot
+func Startup(settings *models.AppSettings) context.CancelFunc {
+	// Check for necessary stuff are installed or whatnotmode
 	err := checkCommands()
 	if err != nil {
+		// TODO: Add a popup to the GUI
 		log.Println("Required command is missing:", err)
 		return nil
 	}
@@ -57,36 +59,68 @@ func Startup() context.CancelFunc {
 				// If the context is canceled, return from the goroutine
 				return
 			case <-ticker.C:
-				// 1. Fetching data to input into image
-				cpuTemp, _, cpuFan, _, err := sensors.GetSensorData()
-				if err != nil {
-					log.Fatal(err)
-				}
+				// If the ticker triggers, generate a new GIF
 
-				// 2. Get CPU Load
-				cpuLoad, err := sensors.GetCPULoad()
-				if err != nil {
-					continue // Skip this cycle if there was an error fetching the data
-				}
+				var frames []*frame.Frame
 
-				// 3. Get network speed
-				netSpeed, err := sensors.GetNetworkSpeed()
-				if err != nil {
-					continue // Skip this cycle if there was an error fetching the data
-				}
+				if settings.Mode == "System mode" {
+					var cpuTemp, _, cpuFan, _ string
+					var cpuLoadOrRAMUsed int
 
-				// Generate frames for single row text
-				frames := make([]*frame.Frame, numFrames)
-				for i := 0; i < numFrames; i++ {
-					f := frame.NewFrame(frame.Width, frame.Height, fontSize, static.FontFile)
-					f.DrawText("      "+cpuTemp, 1)
-					if cpuFan != "0 RPM" {
-						f.DrawText("   "+cpuFan, 3)
+					// Fetching CPU temp
+					if settings.ShowCPUTemp {
+						cpuTemp, _, cpuFan, _, err = sensors.GetSensorData()
+						if err != nil {
+							log.Fatal(err)
+						}
 					} else {
-						f.DrawText("     "+netSpeed, 3)
+						cpuTemp = ""
 					}
-					f.DrawProgressBar(cpuLoad, 4)
-					frames[i] = f
+
+					// Fetching CPU Load or RAM Use
+					if settings.CPULoadOrRAMUse == "CPU Load" {
+						// Get CPU Load
+						cpuLoadOrRAMUsed, err = sensors.GetCPULoad()
+						if err != nil {
+							continue // Skip this cycle if there was an error fetching the data
+						}
+					} else {
+						// Get RAM Use
+						cpuLoadOrRAMUsed, err = sensors.GetRAMUsage()
+						if err != nil {
+							continue // Skip this cycle if there was an error fetching the data
+						}
+					}
+
+					// Get network speed
+					netSpeed, err := sensors.GetNetworkSpeed()
+					if err != nil {
+						continue // Skip this cycle if there was an error fetching the data
+					}
+
+					// Generate frames for single row text
+					frames = make([]*frame.Frame, numFrames)
+					for i := 0; i < numFrames; i++ {
+						f := frame.NewFrame(frame.Width, frame.Height, fontSize, static.FontFile)
+						f.DrawText("      "+cpuTemp, 1)
+						if cpuFan != "0 RPM" {
+							f.DrawText("   "+cpuFan, 3)
+						} else {
+							f.DrawText("     "+netSpeed, 3)
+						}
+						f.DrawProgressBar(cpuLoadOrRAMUsed, 4)
+						frames[i] = f
+					}
+				}
+
+				// TODO: Add audio mode
+				if settings.Mode == "Audio mode" {
+					// If demo mode is enabled, generate random data
+					if settings.EqualizerDemo {
+						frames = sensors.GenerateEqualizerFrames(10, 12)
+					} else {
+						// Get audio data in frames
+					}
 				}
 
 				// Append output to an img

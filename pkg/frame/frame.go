@@ -72,15 +72,21 @@ func (f *Frame) DrawTextMulti(texts []string, offsets []int) {
 
 // DrawProgressBar draws a progress bar with the given progress
 func (f *Frame) DrawProgressBar(progress int, row int) {
-	bar := ""
 	maxProgress := 12
+
+	// calculate the number of dashes to draw
+	dashes := progress * maxProgress / 100
+
+	bar := ""
+
 	for i := 0; i < maxProgress; i++ {
-		if i < progress {
+		if i < dashes {
 			bar += "-"
 		} else {
 			bar += " "
 		}
 	}
+
 	f.DrawText(bar, row)
 }
 
