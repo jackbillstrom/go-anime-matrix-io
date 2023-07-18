@@ -8,6 +8,7 @@
 *.dll
 *.so
 *.dylib
+go-anime-matrix-io
 
 # Test binary, built with `go test -c`
 *.test
@@ -22,6 +23,5 @@
 go.work
 
 # IDE's
-./.fleet/
-./.idea/
-out.gif
+.fleet/
+.idea/
