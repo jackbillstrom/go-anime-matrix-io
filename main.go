@@ -13,9 +13,11 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/getlantern/systray"
 )
 
-//go:embed static/pixelmix.ttf
+//go:embed static/fonts/pixelmix.ttf
 var FontFile embed.FS
 
 // Constants for necessary parameters
@@ -26,48 +28,21 @@ const (
 	seconds   = 2
 )
 
-// handleCrash is run to disable anime matrix after a recovery
-func handleCrash() {
-	if r := recover(); r != nil {
-		fmt.Println("Recovered from crash, disabling anime:", r)
-		utils.DisableAnime()
-	}
+func main() {
+	// Initialize the systray
+	systray.Run(onReady, utils.DisableAnime)
 }
 
-func main() {
-
-	// Check for necessary stuff are installed or whatnot
-	err := utils.CheckCommands()
-	if err != nil {
-		fmt.Println("Required command is missing:", err)
-		return
-	}
-
-	// On the first run, set up the service
-	if _, err := os.Stat("/etc/systemd/system/anime-matrix-io.service"); os.IsNotExist(err) {
-		utils.SetupService()
-	}
-
-	// Clear & enable matrix display via asusctl
-	utils.EnableAnime()
-
-	// Create a ticker that triggers every X seconds
-	ticker := time.NewTicker(seconds * time.Second)
-
-	// Make sure anime is disabled when the program ends
-	defer utils.DisableAnime()
-
-	// Make sure anime is disabled when the program crashes
-	defer handleCrash()
-
+func onReady() {
 	// Create a cancellable context
 	ctx, cancel := context.WithCancel(context.Background())
 
-	// setup signal catching
+	// Set up signal catching
 	sigs := make(chan os.Signal, 1)
-
-	// register the sigs channel to receive SIGINT
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+	// Create a channel to receive quit events from systray
+	quitCh := make(chan struct{})
 
 	// Launch a goroutine that will update the data and generate the GIF
 	go func() {
@@ -76,20 +51,20 @@ func main() {
 			case <-ctx.Done():
 				// If the context is canceled, return from the goroutine
 				return
-			case <-ticker.C:
-				// 1. Fetching data to input into image
+			case <-time.Tick(seconds * time.Second):
+				// Fetching data to input into image
 				cpuTemp, _, cpuFan, _, err := sensors.GetSensorData()
 				if err != nil {
 					log.Fatal(err)
 				}
 
-				// 2. Get CPU Load
+				// Get CPU Load
 				cpuLoad, err := sensors.GetCPULoad()
 				if err != nil {
 					continue // Skip this cycle if there was an error fetching the data
 				}
 
-				// 3. Get network speed
+				// Get network speed
 				netSpeed, err := sensors.GetNetworkSpeed()
 				if err != nil {
 					continue // Skip this cycle if there was an error fetching the data
@@ -113,7 +88,7 @@ func main() {
 					frames[i] = f
 				}
 
-				// Append output to an img
+				// Append output to an image
 				err = gifcreator.SaveGif(fileName, frames)
 				if err != nil {
 					continue // Skip this cycle if there was an error saving the GIF
@@ -125,12 +100,24 @@ func main() {
 		}
 	}()
 
-	// Wait for an interrupt signal
-	<-sigs
+	// Handle quit event from systray
+	go func() {
+		<-quitCh
+		cancel()
+	}()
 
-	// When the signal is received, cancel the context
-	cancel()
+	// Set up the systray menu
+	mQuit := systray.AddMenuItem("Quit", "Quit the application")
 
-	// Wait a bit to allow the goroutines to clean up
-	time.Sleep(time.Second)
+	// Main loop
+	for {
+		select {
+		case <-mQuit.ClickedCh:
+			// Quit event received, send a signal to the goroutine to cancel the context
+			quitCh <- struct{}{}
+			utils.DisableAnime()
+			systray.Quit()
+			return
+		}
+	}
 }

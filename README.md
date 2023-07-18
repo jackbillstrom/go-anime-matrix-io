@@ -56,7 +56,6 @@ Once you have built the project, you can run it using:
 
 In some cases, you'd need to run the commands below in order to run as it as a service:
 
-
 ```sh
 sudo systemctl daemon-reload && sudo systemctl restart anime-matrix-io.service
 ```
