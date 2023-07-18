@@ -3,6 +3,7 @@ module go-anime-matrix-io
 go 1.20
 
 require (
+	fyne.io/fyne v1.4.3
 	fyne.io/fyne/v2 v2.3.5
 	github.com/getlantern/systray v1.2.2
 	github.com/shirou/gopsutil/v3 v3.23.6
@@ -17,6 +18,7 @@ require (
 	github.com/fyne-io/gl-js v0.0.0-20220119005834-d2da28d9ccfe // indirect
 	github.com/fyne-io/glfw-js v0.0.0-20220120001248-ee7290d23504 // indirect
 	github.com/fyne-io/image v0.0.0-20220602074514-4956b0afb3d2 // indirect
+	github.com/fyne-io/mobile v0.1.2 // indirect
 	github.com/getlantern/context v0.0.0-20190109183933-c447772a6520 // indirect
 	github.com/getlantern/errors v0.0.0-20190325191628-abdb3e3e36f7 // indirect
 	github.com/getlantern/golog v0.0.0-20190830074920-4ef2e798c2d7 // indirect
