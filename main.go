@@ -1,10 +1,11 @@
 package main
 
 import (
+	"fyne.io/fyne/v2/theme"
 	"go-anime-matrix-io/internal/gui"
+	"go-anime-matrix-io/pkg/utils"
 	"log"
 
-	"fyne.io/fyne/theme"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/driver/desktop"
@@ -18,35 +19,43 @@ import (
 //go:embed static/fonts/pixelmix.ttf
 var FontFile embed.FS
 
+//go:embed Icon.png
+var IconFile embed.FS
+
 // Main window
 var topWindow fyne.Window
 
 const preferenceCurrentTutorial = "currentTutorial"
 
-func makeTray(a fyne.App) {
+func makeTray(a fyne.App, w fyne.Window) {
 	if desk, ok := a.(desktop.App); ok {
-		h := fyne.NewMenuItem("Hello", func() {})
-		h.Icon = theme.HomeIcon()
-		menu := fyne.NewMenu("Hello World", h)
-		h.Action = func() {
+		h := fyne.NewMenuItem("Open settings", func() {
 			log.Println("System tray menu tapped")
-			h.Label = "Welcome"
-			menu.Refresh()
-		}
+			w.Show()
+		})
+		h.Icon = theme.SettingsIcon()
+		menu := fyne.NewMenu("Hello World", h)
 		desk.SetSystemTrayMenu(menu)
 	}
 }
 
 func main() {
 	a := app.NewWithID("github.jackbillstrom.go-anime-matrix-io")
-	//a.SetIcon(theme.FyneLogo())
-	makeTray(a)
+	a.SetIcon(utils.AppIcon(IconFile))
+
 	//logLifecycle(a)
-	w := a.NewWindow("Anime Matrix IO")
+	w := a.NewWindow("Go Anime Matrix")
 	topWindow = w
+
+	makeTray(a, w)
 
 	//w.SetMainMenu(makeMenu(a, w))
 	w.SetMaster()
+
+	// Set the window close intercept to hide the window instead of exiting the app
+	w.SetCloseIntercept(func() {
+		w.Hide()
+	})
 
 	content := container.NewMax()
 	title := widget.NewLabel("Component name")

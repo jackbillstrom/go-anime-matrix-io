@@ -5,7 +5,6 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
-	"fyne.io/fyne/v2/cmd/fyne_demo/data"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 )
@@ -20,7 +19,7 @@ func parseURL(urlStr string) *url.URL {
 }
 
 func welcomeScreen(_ fyne.Window) fyne.CanvasObject {
-	logo := canvas.NewImageFromResource(data.FyneScene)
+	logo := canvas.NewImageFromFile("static/icons/matrix-light.png")
 	logo.FillMode = canvas.ImageFillContain
 	if fyne.CurrentDevice().IsMobile() {
 		logo.SetMinSize(fyne.NewSize(192, 192))
@@ -29,15 +28,15 @@ func welcomeScreen(_ fyne.Window) fyne.CanvasObject {
 	}
 
 	return container.NewCenter(container.NewVBox(
-		widget.NewLabelWithStyle("Welcome to the Fyne toolkit demo app", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
+		widget.NewLabelWithStyle("Anime Matrix IO", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
 		logo,
+		widget.NewLabelWithStyle("Disabled", fyne.TextAlignCenter, fyne.TextStyle{}),
+		widget.NewLabel(""), // whitespace
 		container.NewHBox(
-			widget.NewHyperlink("fyne.io", parseURL("https://fyne.io/")),
+			widget.NewHyperlink("github", parseURL("https://github.com/jackbillstrom/go-anime-matrix-io/")),
 			widget.NewLabel("-"),
-			widget.NewHyperlink("documentation", parseURL("https://developer.fyne.io/")),
-			widget.NewLabel("-"),
-			widget.NewHyperlink("sponsor", parseURL("https://fyne.io/sponsor/")),
+			widget.NewHyperlink("buy me a coffee (or beer)", parseURL("https://bmc.link/jackbillstrom")),
 		),
-		widget.NewLabel(""), // balance the header on the tutorial screen we leave blank on this content
+		widget.NewLabel(""), // whitespace
 	))
 }
