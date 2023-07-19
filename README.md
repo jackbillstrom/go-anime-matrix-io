@@ -52,30 +52,24 @@ Once you have built the project, you can run it using:
 ./go-anime-matrix-io
 ```
 
-**To install as a service, you might need to run the program as root.**
 
-In some cases, you'd need to run the commands below in order to run as it as a service:
-
-
-```sh
-sudo systemctl daemon-reload && sudo systemctl restart anime-matrix-io.service
-```
-
-When the program is running, it will update the Anime Matrix display with the system's CPU temperature and fan speed every 10 seconds. The program runs indefinitely until it is stopped. To stop the program, you can use `Ctrl+C` in the terminal.
+When the program is running, it will update the Anime Matrix display with the system's CPU temperature and fan speed every 1 seconds. The program runs indefinitely until it is stopped. To stop the program, you can use `Ctrl+C` in the terminal.
 
 ### What to do if the program crashes
 
-The program is designed to handle crashes gracefully. If the program crashes or is forcefully terminated, it will automatically disable the anime matrix.
+The program is designed to handle crashes gracefully. If the program crashes or is forcefully terminated, it will automatically clear and stop usage of the anime matrix.
+If the screen does not turn off after the program has crashed, you can run the following command to turn it off:
+
+```sh
+asusctl anime -e false
+```
 
 ### TODO
-- A TUI to change options graphically
-- Better layout for the matrix display
-- Better error handling
-- Multiple themes
-- Add options to customize the matrix display via a config file.
-- Add support for other Anime Matrix displays
 - Add support for other systems (Windows)
-- Add support for other system sensors (GPU temperature, etc.)
+- Add support for other Anime Matrix displays
+- Better error handling
+- Better layout for the matrix display
+- Multiple themes
 
 ## Contributing
 
@@ -83,7 +77,9 @@ We welcome contributions from the community. If you would like to contribute, pl
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
+This project, **except the [PixelMix font](https://andrewtyler.gumroad.com/)** is licensed under the MIT License — See the [LICENSE.md](LICENSE.md) file for details.
+
+*Credits to [Andrew Tyler](https://andrewtyler.gumroad.com/) for the font [PixelMix - Personal use](https://www.dafont.com/pixelmix.font)*
 
 ## Acknowledgments
 
