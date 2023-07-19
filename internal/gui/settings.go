@@ -1,6 +1,7 @@
 package gui
 
 import (
+	"context"
 	"fmt"
 	"fyne.io/fyne/v2/theme"
 	"go-anime-matrix-io/internal/models"
@@ -30,14 +31,20 @@ func makeSettingsTab(_ fyne.Window) fyne.CanvasObject {
 		widget.NewToolbarAction(theme.MediaReplayIcon(), func() { fmt.Println("Restarting ...") }),
 	)
 
+	var cancelFunc context.CancelFunc // Saving cancel function for later use
+
+	// Play/pause the animation
 	playAction.OnActivated = func() {
 		if appSettings.Enabled {
-			go utils.DisableAnime()
+			cancelFunc()         // Abort goroutine
+			utils.DisableAnime() // Disable animation just in case it's still running
 			appSettings.Enabled = false
 			playAction.Icon = theme.MediaPlayIcon()
 		} else {
 			// Enable
-			go utils.Startup(appSettings)
+			ctx, cancel := context.WithCancel(context.Background())
+			cancelFunc = cancel
+			go utils.Startup(ctx, appSettings)
 			appSettings.Enabled = true
 			playAction.Icon = theme.MediaPauseIcon()
 		}

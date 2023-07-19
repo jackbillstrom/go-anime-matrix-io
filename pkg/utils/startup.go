@@ -21,7 +21,7 @@ const (
 	seconds   = 1 // Refresh rate
 )
 
-func Startup(settings *models.AppSettings) context.CancelFunc {
+func Startup(ctx context.Context, settings *models.AppSettings) context.CancelFunc {
 	// Check for necessary stuff are installed or not
 	err := checkCommands()
 	if err != nil {
@@ -43,7 +43,7 @@ func Startup(settings *models.AppSettings) context.CancelFunc {
 	defer HandleCrash()
 
 	// Create a cancellable context
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(ctx)
 
 	// setup signal catching
 	sigs := make(chan os.Signal, 1)

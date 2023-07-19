@@ -5,4 +5,4 @@ Website = "https://github.com/jackbillstrom/go-anime-matrix-io/"
   Name = "Anime Matrix IO"
   ID = "com.jackbillstrom.go-anime-matrix-io"
   Version = "1.0.0"
-  Build = 2
+  Build = 5
