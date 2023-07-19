@@ -39,7 +39,7 @@ func Display(fileName string) {
 }
 
 // CheckCommands is used for checking for necessary tools are installed
-func CheckCommands() error {
+func checkCommands() error {
 	commands := []string{
 		"asusctl",
 		"sensors",
@@ -55,8 +55,8 @@ func CheckCommands() error {
 	return nil
 }
 
-// SetupService is used for setting up the systemd service file
-func SetupService() {
+// _ (SetupService) is used for setting up the systemd service file
+func _() {
 	// Ask the user if they want to install the service
 	fmt.Print("Do you want to install the service? [Y/n] ")
 	reader := bufio.NewReader(os.Stdin)

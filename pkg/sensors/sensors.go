@@ -4,16 +4,21 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"github.com/elastic/gosigar"
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/net"
+	"go-anime-matrix-io/pkg/frame"
+	"go-anime-matrix-io/static"
 	"math"
+	"math/rand"
 	"os/exec"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 )
 
-// GetSensorData returns and sturctures the output from the lm-sensors package
+// GetSensorData returns and structures the output from the lm-sensors package
 func GetSensorData() (cpuTemp string, gpuTemp string, cpuFan string, gpuFan string, err error) {
 	cmd := exec.Command("sensors")
 	out, err := cmd.Output()
@@ -86,6 +91,50 @@ func GetCPULoad() (load int, err error) {
 	return int(rounded), err
 }
 
+// GetRAMUsage returns the current RAM usage in percentage
+func GetRAMUsage() (usage int, err error) {
+	var mem gosigar.Mem
+	if err = mem.Get(); err != nil {
+		return 0, err
+	}
+
+	// RAM usage is calculated as ActualUsed / Total * 100
+	usage = int(float64(mem.ActualUsed) / float64(mem.Total) * 100)
+	return usage, nil
+}
+
+// GenerateEqualizerFrames returns a string of equalizer bars based on the input
+func GenerateEqualizerFrames(length, maxHeight int) []*frame.Frame {
+	frames := make([]*frame.Frame, 10)
+
+	// Seed the random number generator
+	rand.New(rand.NewSource(time.Now().UnixNano()))
+
+	for i := 0; i < 10; i++ {
+		f := frame.NewFrame(frame.Width, frame.Height, 6, static.FontFile)
+
+		// Generate equalizer blocks for each frame
+		for h := 1; h <= maxHeight; h++ {
+			equalizerLine := ""
+			for j := 0; j < length; j++ {
+				// Generate a random height for the current block
+				blockHeight := rand.Intn(maxHeight) + 1
+
+				if j%(maxHeight+1) <= maxHeight-blockHeight {
+					equalizerLine += "█" // Full block character
+				} else {
+					equalizerLine += " " // Space character
+				}
+			}
+			f.DrawText(equalizerLine, h)
+		}
+
+		frames[i] = f
+	}
+
+	return frames
+}
+
 // GetNetworkSpeed returns the current network speed
 func GetNetworkSpeed() (string, error) {
 	// Get initial network stats
@@ -114,6 +163,22 @@ func GetNetworkSpeed() (string, error) {
 }
 
 // Helpers
+
+// GetAverageFanSpeed returns the average temperature of the CPU and GPU
+func GetAverageFanSpeed(cpuFan, gpuFan string) string {
+	cpuFanSpeed, err := strconv.Atoi(strings.TrimSuffix(cpuFan, " RPM"))
+	if err != nil {
+		return "0 RPM"
+	}
+
+	gpuFanSpeed, err := strconv.Atoi(strings.TrimSuffix(gpuFan, " RPM"))
+	if err != nil {
+		return "0 RPM"
+	}
+
+	average := (cpuFanSpeed + gpuFanSpeed) / 2
+	return fmt.Sprintf("%d RPM", average)
+}
 
 // formatBytes formats bytes to a human-readable format
 func formatBytes(bytes uint64) string {

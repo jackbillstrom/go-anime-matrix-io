@@ -1,136 +1,126 @@
 package main
 
 import (
-	"context"
-	"embed"
-	"fmt"
-	"go-anime-matrix-io/pkg/frame"
-	"go-anime-matrix-io/pkg/gifcreator"
-	"go-anime-matrix-io/pkg/sensors"
+	"go-anime-matrix-io/internal/gui"
 	"go-anime-matrix-io/pkg/utils"
 	"log"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
+
+	"fyne.io/fyne/v2/theme"
+
+	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/driver/desktop"
+
+	"embed"
+
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/widget"
 )
 
-//go:embed static/pixelmix.ttf
-var FontFile embed.FS
+//go:embed Icon.png
+var IconFile embed.FS
 
-// Constants for necessary parameters
-const (
-	numFrames = 30 // Number of frames for the animations
-	fontSize  = 7
-	fileName  = "out.gif"
-	seconds   = 2
-)
+// Main window
+var _ fyne.Window
 
-// handleCrash is run to disable anime matrix after a recovery
-func handleCrash() {
-	if r := recover(); r != nil {
-		fmt.Println("Recovered from crash, disabling anime:", r)
-		utils.DisableAnime()
+const initialScreen = "settings"
+
+// makeTray renders the system tray menu
+func makeTray(a fyne.App, w fyne.Window) {
+	if desk, ok := a.(desktop.App); ok {
+		h := fyne.NewMenuItem("Open settings", func() {
+			log.Println("System tray menu tapped")
+			w.Show()
+		})
+		h.Icon = theme.SettingsIcon()
+		menu := fyne.NewMenu("Settings", h)
+		desk.SetSystemTrayMenu(menu)
 	}
 }
 
 func main() {
+	utils.DisableAnime()
 
-	// Check for necessary stuff are installed or whatnot
-	err := utils.CheckCommands()
-	if err != nil {
-		fmt.Println("Required command is missing:", err)
-		return
+	defer utils.HandleCrash()
+
+	a := app.NewWithID("com.jackbillstrom.go-anime-matrix-io")
+	a.SetIcon(utils.AppIcon(IconFile))
+
+	//logLifecycle(a)
+	w := a.NewWindow("Go Anime Matrix")
+
+	_ = w
+	makeTray(a, w)
+
+	//w.SetMainMenu(makeMenu(a, w))
+	w.SetMaster()
+
+	// Set the window close intercept to hide the window instead of exiting the app
+	w.SetCloseIntercept(func() {
+		w.Hide()
+	})
+
+	content := container.NewMax()
+	title := widget.NewLabel("")
+	intro := widget.NewLabel("")
+	intro.Wrapping = fyne.TextWrapWord
+	setTutorial := func(t gui.Screen) {
+		title.SetText(t.Title)
+		intro.SetText(t.Intro)
+		content.Objects = []fyne.CanvasObject{t.View(w)}
+		content.Refresh()
 	}
 
-	// On the first run, set up the service
-	if _, err := os.Stat("/etc/systemd/system/anime-matrix-io.service"); os.IsNotExist(err) {
-		utils.SetupService()
+	tutorial := container.NewBorder(
+		container.NewVBox(title, widget.NewSeparator(), intro), nil, nil, nil, content)
+	if fyne.CurrentDevice().IsMobile() {
+		w.SetContent(makeNav(setTutorial, false))
+	} else {
+		split := container.NewHSplit(makeNav(setTutorial, true), tutorial)
+		split.Offset = 0.2
+		w.SetContent(split)
 	}
+	w.Resize(fyne.NewSize(640, 460))
+	w.ShowAndRun()
+}
 
-	// Clear & enable matrix display via asusctl
-	utils.EnableAnime()
+// makeNav creates the navigation tree for the application list menu
+func makeNav(setTutorial func(tutorial gui.Screen), loadPrevious bool) fyne.CanvasObject {
+	a := fyne.CurrentApp()
 
-	// Create a ticker that triggers every X seconds
-	ticker := time.NewTicker(seconds * time.Second)
+	tree := &widget.Tree{
+		ChildUIDs: func(uid string) []string {
+			return gui.ScreenIndex[uid]
+		},
+		IsBranch: func(uid string) bool {
+			children, ok := gui.ScreenIndex[uid]
 
-	// Make sure anime is disabled when the program ends
-	defer utils.DisableAnime()
-
-	// Make sure anime is disabled when the program crashes
-	defer handleCrash()
-
-	// Create a cancellable context
-	ctx, cancel := context.WithCancel(context.Background())
-
-	// setup signal catching
-	sigs := make(chan os.Signal, 1)
-
-	// register the sigs channel to receive SIGINT
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-
-	// Launch a goroutine that will update the data and generate the GIF
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				// If the context is canceled, return from the goroutine
+			return ok && len(children) > 0
+		},
+		CreateNode: func(branch bool) fyne.CanvasObject {
+			return widget.NewLabel("")
+		},
+		UpdateNode: func(uid string, branch bool, obj fyne.CanvasObject) {
+			t, ok := gui.Screens[uid]
+			if !ok {
+				fyne.LogError("Missing panel: "+uid, nil)
 				return
-			case <-ticker.C:
-				// 1. Fetching data to input into image
-				cpuTemp, _, cpuFan, _, err := sensors.GetSensorData()
-				if err != nil {
-					log.Fatal(err)
-				}
-
-				// 2. Get CPU Load
-				cpuLoad, err := sensors.GetCPULoad()
-				if err != nil {
-					continue // Skip this cycle if there was an error fetching the data
-				}
-
-				// 3. Get network speed
-				netSpeed, err := sensors.GetNetworkSpeed()
-				if err != nil {
-					continue // Skip this cycle if there was an error fetching the data
-				}
-
-				// Generate frames for single row text
-				frames := make([]*frame.Frame, numFrames)
-				for i := 0; i < numFrames; i++ {
-					f := frame.NewFrame(frame.Width, frame.Height, fontSize, FontFile)
-					f.DrawText("      "+cpuTemp, 1)
-					if cpuFan != "0 RPM" {
-						f.DrawText("   "+cpuFan, 3)
-					} else if netSpeed != "0 B/s" {
-						f.DrawText("  "+netSpeed, 3)
-					} else {
-						// If there is no fan speed or network speed, show the CPU load
-						str := fmt.Sprintf("   CPU %d%%", cpuLoad)
-						f.DrawText(str, 3)
-					}
-					f.DrawProgressBar(cpuLoad, 4)
-					frames[i] = f
-				}
-
-				// Append output to an img
-				err = gifcreator.SaveGif(fileName, frames)
-				if err != nil {
-					continue // Skip this cycle if there was an error saving the GIF
-				}
-
-				// Append to anime matrix
-				utils.Display(fileName)
 			}
-		}
-	}()
+			obj.(*widget.Label).SetText(t.Title)
+			obj.(*widget.Label).TextStyle = fyne.TextStyle{}
+		},
+		OnSelected: func(uid string) {
+			if t, ok := gui.Screens[uid]; ok {
+				a.Preferences().SetString(initialScreen, uid)
+				setTutorial(t)
+			}
+		},
+	}
 
-	// Wait for an interrupt signal
-	<-sigs
+	if loadPrevious {
+		currentPref := a.Preferences().StringWithFallback(initialScreen, "welcome")
+		tree.Select(currentPref)
+	}
 
-	// When the signal is received, cancel the context
-	cancel()
-
-	// Wait a bit to allow the goroutines to clean up
-	time.Sleep(time.Second)
+	return container.NewBorder(nil, nil, nil, nil, tree)
 }

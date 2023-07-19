@@ -1,7 +1,13 @@
 # go-anime-matrix-io
-![A generated gif-image that displays on your Anime Matrix display](./out.gif)
+
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/jackbillstrom)
+<img src="./placeholder.gif" alt="Banner showing the Go Anime Matrix IO application in dark and light mode" width="1200px" height="400px">
+
+<img src="./out.gif" alt="A generated gif-image that displays on your Anime Matrix display" width="138px" height="64px">
 
 This project, `go-anime-matrix-io`, is a Go-based utility that fetches system performance data (CPU temperature and fan speeds) and displays it on an ASUS Anime Matrix display. It works by retrieving system sensor data at regular intervals, and generates a GIF that is displayed on the Anime Matrix display. This utility has been tested to work on systems running ASUS hardware with an Anime Matrix display and the `asusctl` utility installed.
+
+It is using Fyne as GUI framework, and the [PixelMix font](https://andrewtyler.gumroad.com/) for the text that renders into the `out.gif`, which is being displayed on the Anime Matrix display.
 
 ## Getting Started
 
@@ -52,9 +58,6 @@ Once you have built the project, you can run it using:
 ./go-anime-matrix-io
 ```
 
-
-When the program is running, it will update the Anime Matrix display with the system's CPU temperature and fan speed every 1 seconds. The program runs indefinitely until it is stopped. To stop the program, you can use `Ctrl+C` in the terminal.
-
 ### What to do if the program crashes
 
 The program is designed to handle crashes gracefully. If the program crashes or is forcefully terminated, it will automatically clear and stop usage of the anime matrix.
@@ -65,6 +68,7 @@ asusctl anime -e false
 ```
 
 ### TODO
+- :broom: Refactor code
 - Add support for other systems (Windows)
 - Add support for other Anime Matrix displays
 - Better error handling
