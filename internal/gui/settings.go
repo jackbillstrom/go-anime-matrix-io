@@ -2,9 +2,10 @@ package gui
 
 import (
 	"context"
-	"fyne.io/fyne/v2/theme"
 	"go-anime-matrix-io/internal/models"
 	"go-anime-matrix-io/pkg/utils"
+
+	"fyne.io/fyne/v2/theme"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -32,9 +33,12 @@ func makeSettingsTab(_ fyne.Window) fyne.CanvasObject {
 		widget.NewToolbarSpacer(),
 		playAction,
 		widget.NewToolbarAction(theme.MediaStopIcon(), func() {
+			// Stopping
 			appSettings.Enabled = false
 			utils.DisableAnime()
+			utils.EnableAnime()
 			playAction.Icon = theme.MediaPlayIcon()
+			playAction.ToolbarObject().Refresh()
 		}),
 	)
 
@@ -42,7 +46,7 @@ func makeSettingsTab(_ fyne.Window) fyne.CanvasObject {
 	playAction.OnActivated = func() {
 		if appSettings.Enabled {
 			appSettings.Enabled = false
-			cancelFunc()
+			cancelFunc()         // Cancel the previous context
 			utils.DisableAnime() // Disable animation just in case it's still running
 			playAction.Icon = theme.MediaPlayIcon()
 		} else {

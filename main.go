@@ -1,10 +1,11 @@
 package main
 
 import (
-	"fyne.io/fyne/v2/theme"
 	"go-anime-matrix-io/internal/gui"
 	"go-anime-matrix-io/pkg/utils"
 	"log"
+
+	"fyne.io/fyne/v2/theme"
 
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
@@ -22,7 +23,7 @@ var IconFile embed.FS
 // Main window
 var _ fyne.Window
 
-const preferenceCurrentTutorial = "currentTutorial"
+const initialScreen = "settings"
 
 // makeTray renders the system tray menu
 func makeTray(a fyne.App, w fyne.Window) {
@@ -32,7 +33,7 @@ func makeTray(a fyne.App, w fyne.Window) {
 			w.Show()
 		})
 		h.Icon = theme.SettingsIcon()
-		menu := fyne.NewMenu("Hello World", h)
+		menu := fyne.NewMenu("Settings", h)
 		desk.SetSystemTrayMenu(menu)
 	}
 }
@@ -66,7 +67,6 @@ func main() {
 	setTutorial := func(t gui.Screen) {
 		title.SetText(t.Title)
 		intro.SetText(t.Intro)
-
 		content.Objects = []fyne.CanvasObject{t.View(w)}
 		content.Refresh()
 	}
@@ -111,14 +111,14 @@ func makeNav(setTutorial func(tutorial gui.Screen), loadPrevious bool) fyne.Canv
 		},
 		OnSelected: func(uid string) {
 			if t, ok := gui.Screens[uid]; ok {
-				a.Preferences().SetString(preferenceCurrentTutorial, uid)
+				a.Preferences().SetString(initialScreen, uid)
 				setTutorial(t)
 			}
 		},
 	}
 
 	if loadPrevious {
-		currentPref := a.Preferences().StringWithFallback(preferenceCurrentTutorial, "welcome")
+		currentPref := a.Preferences().StringWithFallback(initialScreen, "welcome")
 		tree.Select(currentPref)
 	}
 
