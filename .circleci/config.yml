@@ -12,7 +12,7 @@ jobs:
 
       - run: go mod download
 
-      - run: go build -o
+      - run: go build -o go-anime-matrix-io
 
       - store_artifacts:
           path: dist
