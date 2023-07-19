@@ -1,0 +1,47 @@
+version: 2.1
+
+jobs:
+  build:
+    docker:
+      - image: cimg/go:1.20.6
+
+    working_directory: ~/repo
+
+    steps:
+      - checkout
+
+      - run: go mod download
+
+      - run: go build -o
+
+      - store_artifacts:
+          path: dist
+
+  package:
+    docker:
+      - image: cimg/go:1.20.6
+
+    working_directory: ~/repo
+
+    steps:
+      - checkout
+
+      - run: fyne package -os linux -icon Icon.png
+
+      - store_artifacts:
+          path: dist
+
+workflows:
+  build-and-package:
+    jobs:
+      - build
+      - package:
+          filters:
+            branches:
+              only: master
+          requires:
+            - build
+
+  build-only:
+    jobs:
+      - build
