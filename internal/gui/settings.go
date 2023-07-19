@@ -58,7 +58,7 @@ func makeSettingsTab(_ fyne.Window) fyne.CanvasObject {
 	appSettings.ShowCPUTemp = true
 
 	// Fan Speeds
-	cpuFanSpeedSelect := widget.NewSelect([]string{"CPU Fan Speed", "GPU Fan Speed", "Average Fan Speeds", "Battery"}, func(s string) {
+	cpuFanSpeedSelect := widget.NewSelect([]string{"CPU Fan Speed", "GPU Fan Speed", "Average Fan Speeds"}, func(s string) {
 		appSettings.CPUFanSpeed = s
 	})
 
