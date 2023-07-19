@@ -2,7 +2,6 @@ package gui
 
 import (
 	"context"
-	"fmt"
 	"fyne.io/fyne/v2/theme"
 	"go-anime-matrix-io/internal/models"
 	"go-anime-matrix-io/pkg/utils"
@@ -15,7 +14,11 @@ import (
 // makeSettingsTab creates a view for accessing options
 func makeSettingsTab(_ fyne.Window) fyne.CanvasObject {
 	var preferences = fyne.CurrentApp().Preferences()
+	var cancelFunc context.CancelFunc // Saving cancel function for later use
 	appSettings := &models.AppSettings{}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancelFunc = cancel
 
 	playAction := widget.NewToolbarAction(theme.MediaPlayIcon(), func() {})
 
@@ -28,26 +31,32 @@ func makeSettingsTab(_ fyne.Window) fyne.CanvasObject {
 		widget.NewToolbarSeparator(),
 		widget.NewToolbarSpacer(),
 		playAction,
-		widget.NewToolbarAction(theme.MediaReplayIcon(), func() { fmt.Println("Restarting ...") }),
+		widget.NewToolbarAction(theme.MediaStopIcon(), func() {
+			appSettings.Enabled = false
+			utils.DisableAnime()
+			playAction.Icon = theme.MediaPlayIcon()
+		}),
 	)
-
-	var cancelFunc context.CancelFunc // Saving cancel function for later use
 
 	// Play/pause the animation
 	playAction.OnActivated = func() {
 		if appSettings.Enabled {
-			cancelFunc()         // Abort goroutine
-			utils.DisableAnime() // Disable animation just in case it's still running
 			appSettings.Enabled = false
+			cancelFunc()
+			utils.DisableAnime() // Disable animation just in case it's still running
 			playAction.Icon = theme.MediaPlayIcon()
 		} else {
 			// Enable
-			ctx, cancel := context.WithCancel(context.Background())
-			cancelFunc = cancel
-			go utils.Startup(ctx, appSettings)
 			appSettings.Enabled = true
+			go func() {
+				cancelFunc, _ = utils.Startup(
+					ctx,
+					appSettings,
+				)
+			}()
 			playAction.Icon = theme.MediaPauseIcon()
 		}
+
 		toolBar.Refresh()
 	}
 
@@ -68,6 +77,9 @@ func makeSettingsTab(_ fyne.Window) fyne.CanvasObject {
 	cpuFanSpeedSelect := widget.NewSelect([]string{"CPU Fan Speed", "GPU Fan Speed", "Average Fan Speeds"}, func(s string) {
 		appSettings.CPUFanSpeed = s
 	})
+	// By default, show CPU Fan Speed
+	cpuFanSpeedSelect.SetSelected("CPU Fan Speed")
+	appSettings.CPUFanSpeed = "CPU Fan Speed"
 
 	// CPU Load or RAM usage
 	cpuLoadOrRAMUse := widget.NewRadioGroup([]string{"CPU Load", "RAM usage"}, func(s string) {
@@ -75,6 +87,7 @@ func makeSettingsTab(_ fyne.Window) fyne.CanvasObject {
 	})
 	// By default, show CPU Load
 	cpuLoadOrRAMUse.SetSelected("CPU Load")
+	appSettings.CPULoadOrRAMUse = "CPU Load"
 
 	// Audio settings
 	showSongTitleCheck := widget.NewCheck("Show song title", func(on bool) {
@@ -84,7 +97,7 @@ func makeSettingsTab(_ fyne.Window) fyne.CanvasObject {
 		appSettings.EqualizerDemo = on
 	})
 
-	// Brightness slider
+	// TODO: Brightness slider
 	brightnessSlider := widget.NewSlider(0, 100)
 	brightnessSlider.Value = 100.0
 	brightnessSlider.Step = 10
@@ -100,7 +113,6 @@ func makeSettingsTab(_ fyne.Window) fyne.CanvasObject {
 	settingsLayout := container.NewVBox(
 		themeLabel,
 		modeSelect,
-		brightnessSlider,
 	)
 
 	// Update visible widgets based on selected mode
@@ -119,8 +131,7 @@ func makeSettingsTab(_ fyne.Window) fyne.CanvasObject {
 			settingsLayout.Add(showEqualizerDemoCheck)
 			settingsLayout.Add(showSongTitleCheck)
 		}
-		settingsLayout.Add(brightnessSlider) // Always show brightness slider
-		settingsLayout.Refresh()             // Refresh the container to show updated widgets
+		settingsLayout.Refresh() // Refresh the container to show updated widgets
 	}
 
 	// A layout that contains the toolbar and the settings layout

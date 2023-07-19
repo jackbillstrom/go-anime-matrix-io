@@ -21,13 +21,11 @@ const (
 	seconds   = 1 // Refresh rate
 )
 
-func Startup(ctx context.Context, settings *models.AppSettings) context.CancelFunc {
+func Startup(ctx context.Context, settings *models.AppSettings) (context.CancelFunc, error) {
 	// Check for necessary stuff are installed or not
 	err := checkCommands()
 	if err != nil {
-		// TODO: Add a popup to the GUI
-		log.Println("Required command is missing:", err)
-		return nil
+		return nil, err
 	}
 
 	// Clear & enable matrix display via asusctl
@@ -159,7 +157,7 @@ func Startup(ctx context.Context, settings *models.AppSettings) context.CancelFu
 	// Wait a bit to allow the goroutines to clean up
 	time.Sleep(time.Second)
 
-	return cancel
+	return cancel, err
 }
 
 // HandleCrash is run to disable anime matrix after a recovery

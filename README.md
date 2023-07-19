@@ -71,6 +71,7 @@ asusctl anime -e false
 ```
 
 ### TODO
+- :broom: Refactor code
 - Add support for other systems (Windows)
 - Add support for other Anime Matrix displays
 - Better error handling

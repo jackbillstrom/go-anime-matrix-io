@@ -25,7 +25,7 @@ var (
 		},
 	}
 
-	// ScreenIndex  defines how our tutorials should be laid out in the index tree
+	// ScreenIndex defines how our tutorials should be laid out in the index tree
 	ScreenIndex = map[string][]string{
 		"": {"preview", "settings", "advanced"},
 	}
