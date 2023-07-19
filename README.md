@@ -32,6 +32,19 @@ sudo apt install lm-sensors
 
 ### Installing
 
+#### Run from executable
+In order to get started the fastest, you could run the following commands to fetch the executable, make it executable and thereafter running it. As followed:
+
+```sh
+wget https://github.com/jackbillstrom/go-anime-matrix-io/releases/download/v.1.1-beta/go-anime-matrix-io-v1.1-beta # download executable
+sudo chmod +x go-anime-matrix-io-v1.1-beta # make executable
+./go-anime-matrix-io-v1.1-beta  # run the executable
+```
+
+
+
+#### Run from source code
+
 To get a copy of this project, you can clone it from GitHub using the following command:
 
 ```sh
