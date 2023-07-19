@@ -1,4 +1,6 @@
 # go-anime-matrix-io
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/jackbillstrom)
+
 <img src="./Icon.png" alt="The current GUI app icon" width="200px" height="200px">
 <img src="./out.gif" alt="A generated gif-image that displays on your Anime Matrix display" width="138px" height="64px">
 
