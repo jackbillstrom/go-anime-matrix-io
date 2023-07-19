@@ -94,12 +94,15 @@ func makeSettingsTab(_ fyne.Window) fyne.CanvasObject {
 	appSettings.CPULoadOrRAMUse = "CPU Load"
 
 	// Audio settings
-	showSongTitleCheck := widget.NewCheck("Show song title", func(on bool) {
-		appSettings.ShowSongTitle = on
-	})
+	// showSongTitleCheck := widget.NewCheck("Show song title", func(on bool) {
+	// 	appSettings.ShowSongTitle = on
+	// })
 	showEqualizerDemoCheck := widget.NewCheck("Show equalizer demo", func(on bool) {
 		appSettings.EqualizerDemo = on
 	})
+	// By default, show equalizer demo because it's cool :) (Not implemented yet)
+	showEqualizerDemoCheck.Checked = true
+	appSettings.EqualizerDemo = true
 
 	// TODO: Brightness slider
 	brightnessSlider := widget.NewSlider(0, 100)
@@ -133,7 +136,7 @@ func makeSettingsTab(_ fyne.Window) fyne.CanvasObject {
 			settingsLayout.Add(cpuLoadOrRAMUse)
 		} else if s == "Audio mode" {
 			settingsLayout.Add(showEqualizerDemoCheck)
-			settingsLayout.Add(showSongTitleCheck)
+			// settingsLayout.Add(showSongTitleCheck)
 		}
 		settingsLayout.Refresh() // Refresh the container to show updated widgets
 	}
