@@ -1,7 +1,11 @@
 # go-anime-matrix-io
-![A generated gif-image that displays on your Anime Matrix display](./out.gif)
+<img src="./Icon.png" alt="The current GUI app icon" width="200px" height="200px">
+<img src="./out.gif" alt="A generated gif-image that displays on your Anime Matrix display" width="138px" height="64px">
+
 
 This project, `go-anime-matrix-io`, is a Go-based utility that fetches system performance data (CPU temperature and fan speeds) and displays it on an ASUS Anime Matrix display. It works by retrieving system sensor data at regular intervals, and generates a GIF that is displayed on the Anime Matrix display. This utility has been tested to work on systems running ASUS hardware with an Anime Matrix display and the `asusctl` utility installed.
+
+It is using Fyne as GUI framework, and the [PixelMix font](https://andrewtyler.gumroad.com/) for the text that renders into the `out.gif`, which is being displayed on the Anime Matrix display.
 
 ## Getting Started
 
