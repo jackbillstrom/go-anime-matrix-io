@@ -22,7 +22,7 @@ const (
 )
 
 func Startup(settings *models.AppSettings) context.CancelFunc {
-	// Check for necessary stuff are installed or whatnotmode
+	// Check for necessary stuff are installed or not
 	err := checkCommands()
 	if err != nil {
 		// TODO: Add a popup to the GUI
@@ -64,17 +64,31 @@ func Startup(settings *models.AppSettings) context.CancelFunc {
 				var frames []*frame.Frame
 
 				if settings.Mode == "System mode" {
-					var cpuTemp, _, cpuFan, _ string
+					var cpuTemp, _, fanSpeed, gpuFan string
 					var cpuLoadOrRAMUsed int
 
 					// Fetching CPU temp
 					if settings.ShowCPUTemp {
-						cpuTemp, _, cpuFan, _, err = sensors.GetSensorData()
+						cpuTemp, _, fanSpeed, gpuFan, err = sensors.GetSensorData()
 						if err != nil {
 							log.Fatal(err)
 						}
 					} else {
 						cpuTemp = ""
+					}
+
+					// Select which sensor to use
+					if settings.CPUFanSpeed == "GPU Fan Speed" {
+						fanSpeed = gpuFan
+					}
+
+					switch settings.CPUFanSpeed {
+					case "CPU Fan Speed":
+						// Defaults to CPU Fan Speed
+					case "GPU Fan Speed":
+						fanSpeed = gpuFan
+					case "Average Fan Speeds":
+						fanSpeed = sensors.GetAverageFanSpeed(fanSpeed, gpuFan)
 					}
 
 					// Fetching CPU Load or RAM Use
@@ -103,8 +117,8 @@ func Startup(settings *models.AppSettings) context.CancelFunc {
 					for i := 0; i < numFrames; i++ {
 						f := frame.NewFrame(frame.Width, frame.Height, fontSize, static.FontFile)
 						f.DrawText("      "+cpuTemp, 1)
-						if cpuFan != "0 RPM" {
-							f.DrawText("   "+cpuFan, 3)
+						if fanSpeed != "" {
+							f.DrawText("   "+fanSpeed, 3)
 						} else {
 							f.DrawText("     "+netSpeed, 3)
 						}
@@ -119,7 +133,8 @@ func Startup(settings *models.AppSettings) context.CancelFunc {
 					if settings.EqualizerDemo {
 						frames = sensors.GenerateEqualizerFrames(10, 12)
 					} else {
-						// Get audio data in frames
+						// TODO: Get audio data in frames
+						// TODO: Get the currently playing song's name
 					}
 				}
 

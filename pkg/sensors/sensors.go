@@ -14,6 +14,7 @@ import (
 	"os/exec"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -162,6 +163,22 @@ func GetNetworkSpeed() (string, error) {
 }
 
 // Helpers
+
+// GetAverageFanSpeed returns the average temperature of the CPU and GPU
+func GetAverageFanSpeed(cpuFan, gpuFan string) string {
+	cpuFanSpeed, err := strconv.Atoi(strings.TrimSuffix(cpuFan, " RPM"))
+	if err != nil {
+		return "0 RPM"
+	}
+
+	gpuFanSpeed, err := strconv.Atoi(strings.TrimSuffix(gpuFan, " RPM"))
+	if err != nil {
+		return "0 RPM"
+	}
+
+	average := (cpuFanSpeed + gpuFanSpeed) / 2
+	return fmt.Sprintf("%d RPM", average)
+}
 
 // formatBytes formats bytes to a human-readable format
 func formatBytes(bytes uint64) string {

@@ -53,6 +53,9 @@ func makeSettingsTab(_ fyne.Window) fyne.CanvasObject {
 	cpuTempCheck := widget.NewCheck("Show CPU temperature", func(on bool) {
 		appSettings.ShowCPUTemp = on
 	})
+	// By default, show CPU temperature
+	cpuTempCheck.Checked = true
+	appSettings.ShowCPUTemp = true
 
 	// Fan Speeds
 	cpuFanSpeedSelect := widget.NewSelect([]string{"CPU Fan Speed", "GPU Fan Speed", "Average Fan Speeds", "Battery"}, func(s string) {
@@ -63,6 +66,8 @@ func makeSettingsTab(_ fyne.Window) fyne.CanvasObject {
 	cpuLoadOrRAMUse := widget.NewRadioGroup([]string{"CPU Load", "RAM usage"}, func(s string) {
 		appSettings.CPULoadOrRAMUse = s
 	})
+	// By default, show CPU Load
+	cpuLoadOrRAMUse.SetSelected("CPU Load")
 
 	// Audio settings
 	showSongTitleCheck := widget.NewCheck("Show song title", func(on bool) {
