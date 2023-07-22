@@ -28,17 +28,8 @@ func Startup(ctx context.Context, settings *models.AppSettings) (context.CancelF
 		return nil, err
 	}
 
-	// Clear & enable matrix display via asusctl
-	EnableAnime()
-
 	// Create a ticker that triggers every X seconds
 	ticker := time.NewTicker(seconds * time.Second)
-
-	// Make sure anime is disabled when the program ends
-	defer DisableAnime()
-
-	// Make sure anime is disabled when the program crashes
-	defer HandleCrash()
 
 	// Create a cancellable context
 	ctx, cancel := context.WithCancel(ctx)
@@ -51,11 +42,11 @@ func Startup(ctx context.Context, settings *models.AppSettings) (context.CancelF
 
 	// Launch a goroutine that will update the data and generate the GIF
 	go func() {
+		// Make sure anime is disabled when the program crashes
+		defer HandleCrash()
+
 		for {
 			select {
-			case <-ctx.Done():
-				// If the context is canceled, return from the goroutine
-				return
 			case <-ticker.C:
 				// If the ticker triggers, generate a new GIF
 
@@ -144,20 +135,15 @@ func Startup(ctx context.Context, settings *models.AppSettings) (context.CancelF
 
 				// Append to anime matrix
 				Display(fileName)
+			case <-ctx.Done():
+				// If the context is canceled, return from the goroutine
+				DisableAnime()
+				return
 			}
 		}
 	}()
 
-	// Wait for an interrupt signal
-	<-sigs
-
-	// When the signal is received, cancel the context
-	cancel()
-
-	// Wait a bit to allow the goroutines to clean up
-	time.Sleep(time.Second)
-
-	return cancel, err
+	return cancel, nil
 }
 
 // HandleCrash is run to disable anime matrix after a recovery

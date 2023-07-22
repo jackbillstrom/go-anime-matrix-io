@@ -32,14 +32,6 @@ func makeSettingsTab(_ fyne.Window) fyne.CanvasObject {
 		widget.NewToolbarSeparator(),
 		widget.NewToolbarSpacer(),
 		playAction,
-		widget.NewToolbarAction(theme.MediaStopIcon(), func() {
-			// Stopping
-			appSettings.Enabled = false
-			utils.DisableAnime()
-			utils.EnableAnime()
-			playAction.Icon = theme.MediaPlayIcon()
-			playAction.ToolbarObject().Refresh()
-		}),
 	)
 
 	// Play/pause the animation
