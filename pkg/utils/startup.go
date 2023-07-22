@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 )
@@ -22,6 +23,7 @@ const (
 )
 
 func Startup(ctx context.Context, settings *models.AppSettings) (context.CancelFunc, error) {
+	var wg sync.WaitGroup
 	// Check for necessary stuff are installed or not
 	err := checkCommands()
 	if err != nil {
@@ -40,6 +42,12 @@ func Startup(ctx context.Context, settings *models.AppSettings) (context.CancelF
 	// register the sigs channel to receive SIGINT
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
+	// Begin animation before the X second ticker
+	err = process(settings)
+	if err != nil {
+		return cancel, err
+	}
+
 	// Launch a goroutine that will update the data and generate the GIF
 	go func() {
 		// Make sure anime is disabled when the program crashes
@@ -47,96 +55,17 @@ func Startup(ctx context.Context, settings *models.AppSettings) (context.CancelF
 
 		for {
 			select {
+			// If the ticker triggers, generate a new GIF
 			case <-ticker.C:
-				// If the ticker triggers, generate a new GIF
-
-				var frames []*frame.Frame
-
-				if settings.Mode == "System mode" {
-					var cpuTemp, _, fanSpeed, gpuFan string
-					var cpuLoadOrRAMUsed int
-
-					// Fetching CPU temp
-					if settings.ShowCPUTemp {
-						cpuTemp, _, fanSpeed, gpuFan, err = sensors.GetSensorData()
-						if err != nil {
-							log.Fatal(err)
-						}
-					} else {
-						cpuTemp = ""
-					}
-
-					// Select which sensor to use
-					if settings.CPUFanSpeed == "GPU Fan Speed" {
-						fanSpeed = gpuFan
-					}
-
-					switch settings.CPUFanSpeed {
-					case "CPU Fan Speed":
-						// Defaults to CPU Fan Speed
-					case "GPU Fan Speed":
-						fanSpeed = gpuFan
-					case "Average Fan Speeds":
-						fanSpeed = sensors.GetAverageFanSpeed(fanSpeed, gpuFan)
-					}
-
-					// Fetching CPU Load or RAM Use
-					if settings.CPULoadOrRAMUse == "CPU Load" {
-						// Get CPU Load
-						cpuLoadOrRAMUsed, err = sensors.GetCPULoad()
-						if err != nil {
-							continue // Skip this cycle if there was an error fetching the data
-						}
-					} else {
-						// Get RAM Use
-						cpuLoadOrRAMUsed, err = sensors.GetRAMUsage()
-						if err != nil {
-							continue // Skip this cycle if there was an error fetching the data
-						}
-					}
-
-					// Get network speed
-					netSpeed, err := sensors.GetNetworkSpeed()
-					if err != nil {
-						continue // Skip this cycle if there was an error fetching the data
-					}
-
-					// Generate frames for single row text
-					frames = make([]*frame.Frame, numFrames)
-					for i := 0; i < numFrames; i++ {
-						f := frame.NewFrame(frame.Width, frame.Height, fontSize, static.FontFile)
-						f.DrawText("      "+cpuTemp, 1)
-						if fanSpeed != "" {
-							f.DrawText("   "+fanSpeed, 3)
-						} else {
-							f.DrawText("     "+netSpeed, 3)
-						}
-						f.DrawProgressBar(cpuLoadOrRAMUsed, 4)
-						frames[i] = f
-					}
-				}
-
-				// TODO: Add audio mode
-				if settings.Mode == "Audio mode" {
-					// If demo mode is enabled, generate random data
-					if settings.EqualizerDemo {
-						frames = sensors.GenerateEqualizerFrames(10, 12)
-					} else {
-						// TODO: Get audio data in frames
-						// TODO: Get the currently playing song's name
-					}
-				}
-
-				// Append output to an img
-				err = gifcreator.SaveGif(fileName, frames)
+				wg.Add(1)
+				err := process(settings)
 				if err != nil {
-					continue // Skip this cycle if there was an error saving the GIF
+					return
 				}
-
-				// Append to anime matrix
-				Display(fileName)
+				wg.Done()
+			// If the context is canceled, return from the goroutine
 			case <-ctx.Done():
-				// If the context is canceled, return from the goroutine
+				wg.Wait()
 				DisableAnime()
 				return
 			}
@@ -144,6 +73,99 @@ func Startup(ctx context.Context, settings *models.AppSettings) (context.CancelF
 	}()
 
 	return cancel, nil
+}
+
+func process(settings *models.AppSettings) error {
+	var frames []*frame.Frame
+	var err error
+
+	if settings.Mode == "System mode" {
+		var cpuTemp, _, fanSpeed, gpuFan string
+		var cpuLoadOrRAMUsed int
+
+		// Fetching CPU temp
+		if settings.ShowCPUTemp {
+			cpuTemp, _, fanSpeed, gpuFan, err = sensors.GetSensorData()
+			if err != nil {
+				log.Fatal(err)
+			}
+		} else {
+			cpuTemp = ""
+		}
+
+		// Select which sensor to use
+		if settings.CPUFanSpeed == "GPU Fan Speed" {
+			fanSpeed = gpuFan
+		}
+
+		switch settings.CPUFanSpeed {
+		case "CPU Fan Speed":
+			// Defaults to CPU Fan Speed
+		case "GPU Fan Speed":
+			fanSpeed = gpuFan
+		case "Average Fan Speeds":
+			fanSpeed = sensors.GetAverageFanSpeed(fanSpeed, gpuFan)
+		}
+
+		// Fetching CPU Load or RAM Use
+		if settings.CPULoadOrRAMUse == "CPU Load" {
+			// Get CPU Load
+			cpuLoadOrRAMUsed, err = sensors.GetCPULoad()
+			if err != nil {
+				return err
+			}
+		} else {
+			// Get RAM Use
+			cpuLoadOrRAMUsed, err = sensors.GetRAMUsage()
+			if err != nil {
+				return err
+			}
+		}
+
+		// Get network speed
+		netSpeed, err := sensors.GetNetworkSpeed()
+		if err != nil {
+			return err
+		}
+
+		// Generate frames for single row text
+		frames = make([]*frame.Frame, numFrames)
+
+		for i := 0; i < numFrames; i++ {
+			f := frame.NewFrame(frame.Width, frame.Height, fontSize, static.FontFile)
+			f.DrawText("      "+cpuTemp, 1)
+			if fanSpeed != "" {
+				f.DrawText("   "+fanSpeed, 3)
+			} else {
+				f.DrawText("   "+netSpeed, 3)
+			}
+			f.DrawProgressBar(cpuLoadOrRAMUsed, 4)
+			frames[i] = f
+		}
+	}
+
+	// TODO: Add audio mode
+	if settings.Mode == "Audio mode" {
+		// If demo mode is enabled, generate random data
+		if settings.EqualizerDemo {
+			frames = sensors.GenerateEqualizerFrames(10, 12)
+		} else {
+			// TODO: Get audio data in frames
+			// TODO: Get the currently playing song's name
+		}
+	}
+
+	// TODO: Check if "flip" is True, If so make it mirrored horizontally
+
+	// Append output to an img
+	err = gifcreator.SaveGif(fileName, frames, settings.IsMirrored)
+	if err != nil {
+		return err
+	}
+
+	// Append to anime matrix
+	Display(fileName)
+	return nil
 }
 
 // HandleCrash is run to disable anime matrix after a recovery

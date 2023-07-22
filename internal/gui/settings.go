@@ -32,6 +32,9 @@ func makeSettingsTab(_ fyne.Window) fyne.CanvasObject {
 		widget.NewToolbarSeparator(),
 		widget.NewToolbarSpacer(),
 		playAction,
+		// TODO: Flip-button for laptops on desk stands
+		widget.NewToolbarAction(theme.ViewRefreshIcon(), func() {
+		}),
 	)
 
 	// Play/pause the animation
@@ -43,7 +46,8 @@ func makeSettingsTab(_ fyne.Window) fyne.CanvasObject {
 			playAction.Icon = theme.MediaPlayIcon()
 		} else {
 			// Enable
-			appSettings.Enabled = true
+			appSettings.Enabled = true // TODO: Remove
+			appSettings.IsMirrored = false
 			go func() {
 				cancelFunc, _ = utils.Startup(
 					ctx,

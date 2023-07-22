@@ -1,6 +1,7 @@
 # go-anime-matrix-io
 
 [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/jackbillstrom)
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/jackbillstrom/go-anime-matrix-io/tree/master.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/jackbillstrom/go-anime-matrix-io/tree/master)
 <img src="./placeholder.gif" alt="Banner showing the Go Anime Matrix IO application in dark and light mode" width="1200px" height="400px">
 
 <img src="./out.gif" alt="A generated gif-image that displays on your Anime Matrix display" width="138px" height="64px">
