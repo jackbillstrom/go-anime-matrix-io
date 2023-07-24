@@ -11,4 +11,5 @@ type AppSettings struct {
 	ShowEqualizer   bool    `json:"show_equalizer"`
 	EqualizerDemo   bool    `json:"equalizer_demo"`
 	Brightness      float64 `json:"brightness"`
+	IsMirrored      bool    `json:"is_mirrored"`
 }
